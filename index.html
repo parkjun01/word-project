@@ -25,8 +25,10 @@
     <!-- 캡처될 영역 -->
     <div id="capture-area" class="relative w-full max-w-2xl shadow-2xl rounded-xl overflow-hidden bg-white min-h-[800px] flex flex-col">
         
-        <!-- 배경 이미지 -->
-        <img src="http://googleusercontent.com/image_generation_content/2" crossorigin="anonymous" alt="Boast in God Background" class="absolute inset-0 w-full h-full object-cover opacity-40 z-0">
+        <!-- 워터마크 배경 이미지 -->
+        <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
+            <img src="Gemini_Generated_Image_vy7q9vvy7q9vvy7q.jpg" onerror="this.src='https://images.unsplash.com/photo-1529070538774-1843cb3265df?q=80&w=2000&auto=format&fit=crop'" alt="Boast in God Watermark" class="w-full h-full object-cover opacity-15 select-none grayscale-[20%]">
+        </div>
 
         <!-- 상단 텍스트 및 입력 영역 -->
         <div class="relative z-10 p-6 md:p-8 flex flex-col flex-grow">
@@ -219,19 +221,18 @@
                 });
 
                 // 브라우저 렌더링 대기
-                await new Promise(resolve => setTimeout(resolve, 150));
+            await new Promise(resolve => setTimeout(resolve, 150));
 
-                // 2. html2canvas 실행
-                try {
-                    const canvas = await html2canvas(captureArea, {
-                        useCORS: true,
-                        allowTaint: true,
-                        scale: 2, // 고해상도
-                        backgroundColor: '#ffffff'
-                    });
+            // 2. html2canvas 실행
+            try {
+                const canvas = await html2canvas(captureArea, {
+                    useCORS: true,
+                    scale: 2, // 고해상도
+                    backgroundColor: '#ffffff'
+                });
 
-                    // 3. 다운로드
-                    const imageURL = canvas.toDataURL("image/png");
+                // 3. 다운로드
+                const imageURL = canvas.toDataURL("image/png");
                     const link = document.createElement("a");
                     link.href = imageURL;
                     const today = new Date().toISOString().slice(0, 10);
