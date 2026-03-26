@@ -37,8 +37,7 @@
         /* 입력 텍스트 줄높이 및 정렬 보정 */
         .real-input, .fake-input { 
             line-height: 1.4; 
-            padding-top: 0 !important;
-            padding-bottom: 0 !important;
+            padding: 2px 0 !important;
             margin: 0 !important;
         }
         
@@ -51,13 +50,10 @@
             background: transparent;
         }
 
-        /* 캡처용 텍스트 요소 스타일: 입력창과 동일한 정렬 유지 */
-        .fake-input {
-            display: none; /* 기본적으로 숨김 */
-            word-break: break-all;
-            width: 100%;
-            align-items: center;
-        }
+        /* 캡처 중복 방지를 위한 가시성 제어 */
+        .fake-input { display: none; width: 100%; word-break: break-all; }
+        .is-capturing .real-input { display: none !important; }
+        .is-capturing .fake-input { display: block !important; }
 
         /* 개별 폰트 툴바 스타일 */
         .font-toolbar {
@@ -82,15 +78,11 @@
             border-color: #3b82f6;
         }
         
-        /* 세로 중앙 정렬을 위한 헬퍼 */
-        .v-center-container {
+        /* 세로 중앙 정렬 레이아웃 */
+        .v-center-row {
             display: flex;
-            align-items: center;
+            align-items: center; /* 자식 요소들을 세로 중앙으로 정렬 */
         }
-
-        /* 캡처 중일 때 입력창은 숨기고 텍스트 div는 보이게 함 */
-        .capturing-mode .real-input { display: none !important; }
-        .capturing-mode .fake-input { display: flex !important; }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col items-center p-4 py-8 tp-font relative">
@@ -141,12 +133,11 @@
                         <button class="font-choice-btn" onclick="setItemFont('topic-input-wrap', 'f-black', this)">블랙</button>
                     </div>
                 </div>
-                <div class="v-center-container gap-3">
+                <div class="v-center-row gap-3">
                     <label class="shrink-0 text-lg md:text-xl font-bold text-gray-800 tp-font">오늘의 주제 :</label>
-                    <div id="topic-input-wrap" class="flex-grow relative overflow-hidden flex items-center f-noto capture-input-wrapper">
-                        <input type="text" id="topic-input" placeholder="주제를 입력하세요" class="real-input w-full bg-transparent border-b-2 border-gray-300 focus:border-blue-500 outline-none font-bold text-gray-800 px-2 py-1 rounded transition-colors" style="font-size: 20px;">
-                        <!-- 캡처 시 대체될 요소 (글자 잘림 방지) -->
-                        <div class="fake-input w-full font-bold text-gray-800 px-2 py-1 min-h-[1.4em] border-b-2 border-transparent whitespace-nowrap overflow-hidden"></div>
+                    <div id="topic-input-wrap" class="flex-grow relative overflow-hidden f-noto capture-input-wrapper">
+                        <input type="text" id="topic-input" placeholder="주제를 입력하세요" class="real-input w-full bg-transparent border-b-2 border-gray-300 focus:border-blue-500 outline-none font-bold text-gray-800 px-2 py-1 transition-colors" style="font-size: 20px;">
+                        <div class="fake-input font-bold text-gray-800 px-2 py-1 border-b-2 border-transparent whitespace-nowrap overflow-hidden" style="font-size: 20px;"></div>
                     </div>
                 </div>
             </div>
@@ -285,14 +276,14 @@
 
             function createOptionHTML(qId, optId, index) {
                 return `
-                <div class="option-item v-center-container group/opt relative mb-1" data-opt-id="${optId}">
+                <div class="option-item v-center-row group/opt relative mb-1" data-opt-id="${optId}">
                     <div class="mr-2 min-w-[28px] flex items-center justify-center font-bold text-gray-800 tp-font">
                         <span>${getCircleNumber(index)}</span>
                     </div>
-                    <div class="flex-grow relative flex items-center capture-input-wrapper">
-                        <input type="text" placeholder="선택지 입력" class="real-input w-full bg-transparent border-b border-gray-200 focus:border-blue-300 outline-none text-base md:text-lg text-gray-800 px-2 py-1 transition-colors pr-8">
-                        <div class="fake-input w-full font-bold text-gray-800 px-2 py-1 min-h-[1.4em] items-center border-b border-transparent"></div>
-                        <button type="button" class="remove-opt-btn capture-hide absolute right-1 text-gray-400 hover:text-red-500 font-bold opacity-0 group-hover/opt:opacity-100">✕</button>
+                    <div class="flex-grow relative capture-input-wrapper">
+                        <input type="text" placeholder="선택지 입력" class="real-input w-full bg-transparent border-b border-gray-200 focus:border-blue-300 outline-none text-base md:text-lg text-gray-800 px-2 transition-colors pr-8">
+                        <div class="fake-input text-base md:text-lg text-gray-800 px-2 border-b border-transparent"></div>
+                        <button type="button" class="remove-opt-btn capture-hide absolute right-1 top-0 text-gray-400 hover:text-red-500 font-bold opacity-0 group-hover/opt:opacity-100">✕</button>
                     </div>
                 </div>`;
             }
@@ -310,13 +301,13 @@
                             <button class="font-choice-btn" onclick="setItemFont('${contentId}', 'f-black', this)">블랙</button>
                         </div>
                     </div>
-                    <div class="v-center-container">
+                    <div class="v-center-row">
                         <div class="mr-2 min-w-[24px] flex items-center justify-center font-bold text-gray-800 tp-font text-lg md:text-xl">
                             <span>${qIndex}.</span>
                         </div>
-                        <div id="${contentId}" class="flex-grow relative f-noto capture-input-wrapper flex items-center">
-                            <textarea rows="1" placeholder="문제를 입력하세요" class="real-input auto-expand w-full bg-transparent border-b-2 border-gray-200 focus:border-blue-400 outline-none text-base md:text-lg text-gray-800 px-2 py-1 transition-colors pr-8"></textarea>
-                            <div class="fake-input w-full text-base md:text-lg text-gray-800 px-2 py-1 min-h-[1.4em] whitespace-pre-wrap border-b-2 border-transparent items-center"></div>
+                        <div id="${contentId}" class="flex-grow relative f-noto capture-input-wrapper">
+                            <textarea rows="1" placeholder="문제를 입력하세요" class="real-input auto-expand w-full bg-transparent border-b-2 border-gray-200 focus:border-blue-400 outline-none text-base md:text-lg text-gray-800 px-2 transition-colors pr-8"></textarea>
+                            <div class="fake-input text-base md:text-lg text-gray-800 px-2 whitespace-pre-wrap border-b-2 border-transparent"></div>
                             <button type="button" class="remove-q-btn capture-hide absolute top-0 right-2 text-red-500 font-bold opacity-0 group-hover:opacity-100">✕</button>
                         </div>
                     </div>
@@ -341,7 +332,7 @@
             document.addEventListener('input', (e) => {
                 if (e.target.classList.contains('auto-expand')) {
                     e.target.style.height = 'auto'; 
-                    e.target.style.height = e.target.scrollHeight + 'px';
+                    e.target.style.height = (e.target.scrollHeight) + 'px';
                 }
             });
 
@@ -366,7 +357,7 @@
             // 이미지 저장(캡처) 로직 최적화
             captureBtn.onclick = async () => {
                 document.body.classList.add('capturing');
-                captureArea.classList.add('capturing-mode');
+                captureArea.classList.add('is-capturing'); // CSS 제어용 클래스 추가
                 captureBtn.textContent = '이미지 생성 중...';
                 
                 // 모든 입력값 동기화
@@ -377,7 +368,7 @@
                 });
 
                 window.scrollTo(0, 0);
-                await new Promise(r => setTimeout(r, 500)); // 렌더링 대기
+                await new Promise(r => setTimeout(r, 600)); // 렌더링 대기 시간을 넉넉히 줌
 
                 try {
                     const canvas = await html2canvas(captureArea, { 
@@ -394,7 +385,7 @@
                     showToast("이미지 저장 실패", true); 
                 } finally {
                     document.body.classList.remove('capturing');
-                    captureArea.classList.remove('capturing-mode');
+                    captureArea.classList.remove('is-capturing');
                     captureBtn.textContent = '이미지로 저장하기';
                 }
             };
