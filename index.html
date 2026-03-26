@@ -18,26 +18,15 @@
         .font-title { font-family: 'Playfair Display', serif; }
         .capturing .capture-hide { display: none !important; }
         
-        /* 폰트 정의 */
-        .f-noto { font-family: 'Noto Sans KR', sans-serif; }
-        .f-myeongjo { font-family: 'Nanum Myeongjo', serif; }
-        .f-jua { font-family: 'Jua', sans-serif; }
-        .f-gamja { font-family: 'Gamja Flower', cursive; }
-        .f-black { font-family: 'Black Han Sans', sans-serif; }
+        /* [중요] 템플릿 기본 폰트 (라벨, 번호 등 고정) */
+        .tp-font { font-family: 'Noto Sans KR', sans-serif !important; }
 
-        /* 템플릿 폰트 적용 (라벨, 번호 등) */
-        .tp-noto .tp-item { font-family: 'Noto Sans KR', sans-serif; }
-        .tp-myeongjo .tp-item { font-family: 'Nanum Myeongjo', serif; }
-        .tp-jua .tp-item { font-family: 'Jua', sans-serif; }
-        .tp-gamja .tp-item { font-family: 'Gamja Flower', cursive; }
-        .tp-black .tp-item { font-family: 'Black Han Sans', sans-serif; }
-
-        /* 입력 내용 폰트 적용 (실제 작성 글자) */
-        .ct-noto .ct-item { font-family: 'Noto Sans KR', sans-serif !important; }
-        .ct-myeongjo .ct-item { font-family: 'Nanum Myeongjo', serif !important; }
-        .ct-jua .ct-item { font-family: 'Jua', sans-serif !important; }
-        .ct-gamja .ct-item { font-family: 'Gamja Flower', cursive !important; }
-        .ct-black .ct-item { font-family: 'Black Han Sans', sans-serif !important; }
+        /* [중요] 사용자 입력 내용 폰트 정의 */
+        .f-noto { font-family: 'Noto Sans KR', sans-serif !important; }
+        .f-myeongjo { font-family: 'Nanum Myeongjo', serif !important; }
+        .f-jua { font-family: 'Jua', sans-serif !important; }
+        .f-gamja { font-family: 'Gamja Flower', cursive !important; }
+        .f-black { font-family: 'Black Han Sans', sans-serif !important; }
 
         /* 갤러리 가로 스크롤바 디자인 */
         .custom-scrollbar::-webkit-scrollbar { height: 6px; }
@@ -45,15 +34,13 @@
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
-        /* 세로 정렬 최적화 */
+        /* 세로 중앙 정렬 최적화 */
         .q-number-box { line-height: 1; display: flex; align-items: center; justify-content: center; height: 100%; }
         .opt-label-box { line-height: 1; display: flex; align-items: center; justify-content: center; height: 100%; }
         
-        .real-input, .fake-input { line-height: 1.5; }
+        /* 텍스트 줄높이 */
+        .real-input, .fake-input { line-height: 1.6; }
         
-        /* 간격 조절 */
-        .options-container { margin-top: 4px; }
-
         textarea.auto-expand {
             min-height: 44px;
             overflow: hidden;
@@ -66,78 +53,58 @@
             padding-bottom: 10px;
         }
 
-        /* 폰트 버튼 스타일 */
-        .font-btn {
-            padding: 4px 10px;
-            border-radius: 8px;
-            font-size: 11px;
+        /* 개별 폰트 툴바 스타일 */
+        .font-toolbar {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 4px;
+        }
+        .font-choice-btn {
+            background: #f8fafc;
+            color: #64748b;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 10px;
             font-weight: bold;
             border: 1px solid #e2e8f0;
             transition: all 0.2s;
-            background: white;
-            white-space: nowrap;
         }
-        .font-btn.active {
-            border-color: #3b82f6;
+        .font-choice-btn:hover { background: #f1f5f9; }
+        .font-choice-btn.active {
             background: #3b82f6;
             color: white;
+            border-color: #3b82f6;
         }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen flex flex-col items-center p-4 py-8 font-noto relative">
+<body class="bg-gray-100 min-h-screen flex flex-col items-center p-4 py-8 tp-font relative">
 
-    <!-- 커스텀 알림창 (Toast) -->
+    <!-- 커스텀 알림창 -->
     <div id="toast" class="fixed top-4 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-6 py-3 rounded-full shadow-lg transition-opacity duration-300 opacity-0 pointer-events-none z-50 font-bold text-sm">
         알림 메시지
     </div>
 
-    <!-- 컨트롤 바 -->
-    <div class="w-full max-w-lg mb-4 flex flex-col gap-3 bg-white p-4 rounded-xl shadow-md border border-gray-200">
-        <!-- 템플릿 폰트 선택 -->
-        <div>
-            <span class="font-bold text-gray-800 text-xs mb-2 block text-gray-500">전체 스타일 (번호/라벨)</span>
-            <div id="tp-font-selector" class="flex flex-wrap gap-1.5">
-                <button class="font-btn active" data-font="tp-noto">고딕</button>
-                <button class="font-btn" data-font="tp-myeongjo">명조</button>
-                <button class="font-btn" data-font="tp-jua">주아</button>
-                <button class="font-btn" data-font="tp-gamja">감자</button>
-                <button class="font-btn" data-font="tp-black">블랙</button>
-            </div>
+    <!-- 배경 갤러리 컨트롤 바 -->
+    <div class="w-full max-w-lg mb-4 bg-white p-4 rounded-xl shadow-md border border-gray-200">
+        <div class="flex justify-between items-center mb-1">
+            <span class="font-bold text-gray-800 flex items-center gap-1 text-sm">🖼️ 배경 갤러리</span>
+            <span id="save-status" class="text-[10px] text-blue-600 font-bold bg-blue-50 px-2 py-1 rounded-full">상태: 준비 완료</span>
         </div>
-
-        <!-- 입력 내용 폰트 선택 -->
-        <div class="border-t border-gray-50 pt-2">
-            <span class="font-bold text-blue-600 text-xs mb-2 block">작성 글씨체 (내가 쓰는 글)</span>
-            <div id="ct-font-selector" class="flex flex-wrap gap-1.5">
-                <button class="font-btn active" data-font="ct-noto">고딕</button>
-                <button class="font-btn" data-font="ct-myeongjo">명조</button>
-                <button class="font-btn" data-font="ct-jua">주아</button>
-                <button class="font-btn" data-font="ct-gamja">감자</button>
-                <button class="font-btn" data-font="ct-black">블랙</button>
-            </div>
+        <div id="image-gallery" class="flex gap-3 overflow-x-auto pb-2 pt-1 items-center min-h-[5rem] custom-scrollbar">
+            <div class="text-xs text-gray-400 italic px-2">데이터를 불러오는 중입니다...</div>
         </div>
-
-        <div class="border-t border-gray-100 pt-2">
-            <div class="flex justify-between items-center mb-1">
-                <span class="font-bold text-gray-800 flex items-center gap-1 text-sm">🖼️ 배경 갤러리</span>
-                <span id="save-status" class="text-[10px] text-blue-600 font-bold bg-blue-50 px-2 py-1 rounded-full">상태: 준비 완료</span>
-            </div>
-            <div id="image-gallery" class="flex gap-3 overflow-x-auto pb-2 pt-1 items-center min-h-[5rem] custom-scrollbar">
-                <div class="text-xs text-gray-500 italic px-2">데이터를 불러오는 중입니다...</div>
-            </div>
-            <label class="cursor-pointer mt-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg text-sm font-bold transition-colors text-center block w-full shadow-sm">
-                + 새 배경 추가
-                <input type="file" id="bg-upload" class="hidden" accept="image/*">
-            </label>
-        </div>
+        <label class="cursor-pointer mt-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg text-sm font-bold transition-colors text-center block w-full shadow-sm">
+            + 새 배경 추가
+            <input type="file" id="bg-upload" class="hidden" accept="image/*">
+        </label>
     </div>
 
     <!-- 캡처될 영역 -->
-    <div id="capture-area" class="relative w-full max-w-lg shadow-2xl rounded-xl overflow-hidden bg-white min-h-[850px] flex flex-col border border-gray-100 tp-noto ct-noto">
+    <div id="capture-area" class="relative w-full max-w-lg shadow-2xl rounded-xl overflow-hidden bg-white min-h-[850px] flex flex-col border border-gray-100">
         
-        <!-- 워터마크 배경 이미지 -->
+        <!-- 워터마크 배경 이미지 (대체 이미지 로드 기능 제거 유지) -->
         <div id="main-bg-wrap" class="absolute inset-0 pointer-events-none z-0 opacity-30">
-            <img id="main-bg-img" src="Gemini_Generated_Image_sed1dused1dused1.png.jpg" onerror="this.style.display='none'" alt="Background" class="w-full h-full object-cover object-center select-none">
+            <img id="main-bg-img" src="Gemini_Generated_Image_sed1dused1dused1.png.jpg" alt="Background" class="w-full h-full object-cover object-center select-none">
         </div>
 
         <div class="relative z-10 p-6 md:p-8 flex flex-col flex-grow">
@@ -147,20 +114,30 @@
                 <h1 class="text-4xl md:text-5xl font-black text-blue-600 mt-2 tracking-wide">Boast in God</h1>
             </div>
 
-            <!-- 오늘의 주제 -->
-            <div class="mt-6 md:mt-8 flex items-center gap-3 capture-input-wrapper">
-                <label class="shrink-0 text-lg md:text-xl font-bold text-gray-800 tp-item">오늘의 주제 :</label>
-                <div class="flex-grow relative w-full overflow-hidden flex items-center">
-                    <input type="text" id="topic-input" value="" placeholder="주제를 입력하세요" class="real-input ct-item w-full bg-white bg-opacity-70 border-b-2 border-gray-400 focus:border-blue-500 outline-none font-bold text-gray-800 px-2 py-1 rounded transition-colors" style="font-size: 20px;">
-                    <div class="fake-input hidden w-full font-bold text-gray-800 px-2 py-1 min-h-[40px] border-b-2 border-transparent whitespace-nowrap overflow-hidden flex items-center ct-item" style="font-size: 20px;"></div>
+            <!-- 오늘의 주제 섹션 -->
+            <div id="topic-container" class="mt-6 md:mt-8 flex flex-col f-noto">
+                <div class="flex items-center justify-between">
+                    <label class="shrink-0 text-lg md:text-xl font-bold text-gray-800 tp-font">오늘의 주제 :</label>
+                    <!-- 폰트 툴바 -->
+                    <div class="font-toolbar capture-hide" data-target="topic-input-wrap">
+                        <button class="font-choice-btn active" onclick="setItemFont('topic-input-wrap', 'f-noto', this)">고딕</button>
+                        <button class="font-choice-btn" onclick="setItemFont('topic-input-wrap', 'f-myeongjo', this)">명조</button>
+                        <button class="font-choice-btn" onclick="setItemFont('topic-input-wrap', 'f-jua', this)">주아</button>
+                        <button class="font-choice-btn" onclick="setItemFont('topic-input-wrap', 'f-gamja', this)">감자</button>
+                        <button class="font-choice-btn" onclick="setItemFont('topic-input-wrap', 'f-black', this)">블랙</button>
+                    </div>
+                </div>
+                <div id="topic-input-wrap" class="mt-1 relative w-full overflow-hidden flex items-center capture-input-wrapper f-noto">
+                    <input type="text" id="topic-input" value="" placeholder="주제를 먼저 고르고 입력하세요" class="real-input w-full bg-white bg-opacity-70 border-b-2 border-gray-400 focus:border-blue-500 outline-none font-bold text-gray-800 px-2 py-1 rounded transition-colors" style="font-size: 20px;">
+                    <div class="fake-input hidden w-full font-bold text-gray-800 px-2 py-1 min-h-[40px] border-b-2 border-transparent whitespace-nowrap overflow-hidden flex items-center" style="font-size: 20px;"></div>
                 </div>
             </div>
 
             <!-- 오늘의 퀴즈 영역 -->
             <div class="mt-6 md:mt-8 flex-grow flex flex-col">
-                <h3 class="text-xl md:text-2xl font-bold text-gray-800 mb-4 tp-item">오늘의 퀴즈</h3>
+                <h3 class="text-xl md:text-2xl font-bold text-gray-800 mb-4 tp-font">오늘의 퀴즈</h3>
                 <div id="questions-list"></div>
-                <button id="add-q-btn" class="capture-hide mt-2 mb-6 py-2 px-4 border-2 border-dashed border-gray-400 text-gray-600 rounded-lg hover:bg-white hover:bg-opacity-50 hover:border-gray-600 hover:text-gray-900 transition-colors font-bold flex items-center justify-center gap-2 tp-item">
+                <button id="add-q-btn" class="capture-hide mt-2 mb-6 py-2 px-4 border-2 border-dashed border-gray-400 text-gray-600 rounded-lg hover:bg-white hover:bg-opacity-50 hover:border-gray-600 hover:text-gray-900 transition-colors font-bold flex items-center justify-center gap-2 tp-font">
                     <span>+</span> 문제 추가하기
                 </button>
             </div>
@@ -172,54 +149,39 @@
     </button>
 
     <script>
+        const fontClasses = ['f-noto', 'f-myeongjo', 'f-jua', 'f-gamja', 'f-black'];
+
+        // 특정 영역의 폰트를 설정하는 함수
+        function setItemFont(targetId, fontClass, btn) {
+            const target = document.getElementById(targetId);
+            if (!target) return;
+
+            // 폰트 클래스 교체
+            target.classList.remove(...fontClasses);
+            target.classList.add(fontClass);
+
+            // 버튼 활성화 표시
+            const toolbar = btn.parentElement;
+            toolbar.querySelectorAll('.font-choice-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            // 주제 칸일 경우 텍스트 크기 재계산
+            if (targetId === 'topic-input-wrap') {
+                setTimeout(adjustTopicFontSize, 50);
+            }
+        }
+
         document.addEventListener("DOMContentLoaded", () => {
             const bgImg = document.getElementById('main-bg-img');
             const bgUpload = document.getElementById('bg-upload');
-            const saveStatus = document.getElementById('save-status');
             const galleryEl = document.getElementById('image-gallery');
             const toast = document.getElementById('toast');
-            const captureArea = document.getElementById('capture-area');
-            const tpFontSelector = document.getElementById('tp-font-selector');
-            const ctFontSelector = document.getElementById('ct-font-selector');
+            const topicInput = document.getElementById('topic-input');
+            const fakeTopicInput = topicInput.nextElementSibling;
 
-            // --- 폰트 및 설정 로드 ---
             let localGallery = JSON.parse(localStorage.getItem('my_gallery') || '[]');
             const savedBg = localStorage.getItem('saved_bg');
-            const savedTpFont = localStorage.getItem('saved_tp_font') || 'tp-noto';
-            const savedCtFont = localStorage.getItem('saved_ct_font') || 'ct-noto';
-
-            if (savedBg) { bgImg.src = savedBg; bgImg.style.display = 'block'; }
-            applyTpFont(savedTpFont);
-            applyCtFont(savedCtFont);
-
-            function applyTpFont(fontClass) {
-                captureArea.classList.remove('tp-noto', 'tp-myeongjo', 'tp-jua', 'tp-gamja', 'tp-black');
-                captureArea.classList.add(fontClass);
-                document.querySelectorAll('#tp-font-selector .font-btn').forEach(btn => {
-                    btn.classList.toggle('active', btn.dataset.font === fontClass);
-                });
-                localStorage.setItem('saved_tp_font', fontClass);
-            }
-
-            function applyCtFont(fontClass) {
-                captureArea.classList.remove('ct-noto', 'ct-myeongjo', 'ct-jua', 'ct-gamja', 'ct-black');
-                captureArea.classList.add(fontClass);
-                document.querySelectorAll('#ct-font-selector .font-btn').forEach(btn => {
-                    btn.classList.toggle('active', btn.dataset.font === fontClass);
-                });
-                localStorage.setItem('saved_ct_font', fontClass);
-                setTimeout(adjustTopicFontSize, 50);
-            }
-
-            tpFontSelector.addEventListener('click', (e) => {
-                const btn = e.target.closest('.font-btn');
-                if (btn) applyTpFont(btn.dataset.font);
-            });
-
-            ctFontSelector.addEventListener('click', (e) => {
-                const btn = e.target.closest('.font-btn');
-                if (btn) applyCtFont(btn.dataset.font);
-            });
+            if (savedBg) { bgImg.src = savedBg; }
 
             function showToast(msg, isError = false) {
                 toast.textContent = msg;
@@ -228,13 +190,7 @@
                 setTimeout(() => toast.classList.add('opacity-0'), 3000);
             }
 
-            function saveGallery() {
-                try {
-                    if (localGallery.length > 6) localGallery = localGallery.slice(0, 6);
-                    localStorage.setItem('my_gallery', JSON.stringify(localGallery));
-                } catch (e) { showToast("기기 저장 공간이 부족합니다.", true); }
-            }
-
+            // [복구] 이미지 자동 보정(리사이징/압축) 함수
             const autoAdjustImage = (base64Str, maxSize = 1200) => {
                 return new Promise((resolve) => {
                     const img = new Image();
@@ -247,7 +203,9 @@
                             else { w = Math.round((w * maxSize) / h); h = maxSize; }
                         }
                         canvas.width = w; canvas.height = h;
-                        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, w, h);
+                        // JPEG 0.8 품질로 압축하여 저장 용량 최적화
                         resolve(canvas.toDataURL('image/jpeg', 0.8)); 
                     };
                 });
@@ -265,47 +223,47 @@
                     const img = document.createElement('img');
                     img.src = data.bgBase64; img.className = "w-full h-full object-cover";
                     img.onclick = () => { 
-                        bgImg.src = data.bgBase64; bgImg.style.display = 'block';
+                        bgImg.src = data.bgBase64;
                         localStorage.setItem('saved_bg', data.bgBase64);
                         showToast("배경이 변경되었습니다.");
                     };
-                    const del = document.createElement('button');
-                    del.innerHTML = "✕"; del.className = "absolute top-0 right-0 bg-red-500 text-white w-4 h-4 flex items-center justify-center text-[8px] font-bold opacity-0 hover:opacity-100 transition-opacity";
-                    del.onclick = (e) => {
-                        e.stopPropagation();
-                        localGallery = localGallery.filter(item => item.id !== data.id);
-                        saveGallery(); renderGallery();
-                    };
-                    thumb.append(img, del); galleryEl.appendChild(thumb);
+                    thumb.append(img); galleryEl.appendChild(thumb);
                 });
             }
 
             renderGallery();
 
+            // [복구] 이미지 업로드 시 autoAdjustImage 함수를 사용하여 보정 처리
             bgUpload.addEventListener('change', (e) => {
                 const file = e.target.files[0]; if (!file) return;
-                saveStatus.textContent = "상태: 처리 중...";
                 const reader = new FileReader();
                 reader.onload = async (event) => {
+                    // 자동 보정(압축/리사이징) 적용
                     const final = await autoAdjustImage(event.target.result);
-                    bgImg.src = final; bgImg.style.display = 'block';
+                    bgImg.src = final;
                     localStorage.setItem('saved_bg', final);
                     localGallery.unshift({ id: Date.now().toString(), bgBase64: final });
-                    saveGallery(); renderGallery();
-                    saveStatus.textContent = "상태: 준비 완료";
-                    bgUpload.value = ''; 
+                    
+                    if (localGallery.length > 5) localGallery.pop(); 
+                    
+                    try {
+                        localStorage.setItem('my_gallery', JSON.stringify(localGallery));
+                    } catch (e) {
+                        showToast("저장 공간이 부족하여 갤러리에 저장할 수 없습니다.", true);
+                    }
+                    
+                    renderGallery();
+                    showToast("배경이 추가되었습니다.");
                 };
                 reader.readAsDataURL(file);
             });
 
             // --- 오늘의 주제 자동 조절 ---
-            const topicInput = document.getElementById('topic-input');
-            const fakeTopicInput = topicInput.nextElementSibling;
             const measureSpan = document.createElement('span');
             measureSpan.style.visibility = 'hidden'; measureSpan.style.position = 'absolute'; measureSpan.style.whiteSpace = 'nowrap';
             measureSpan.className = 'font-bold px-2'; document.body.appendChild(measureSpan);
 
-            function adjustTopicFontSize() {
+            window.adjustTopicFontSize = function() {
                 const maxWidth = topicInput.clientWidth - 16;
                 if (maxWidth <= 0) return;
                 measureSpan.style.fontFamily = window.getComputedStyle(topicInput).fontFamily;
@@ -332,30 +290,40 @@
             function createOptionHTML(qId, optId, index) {
                 return `
                 <div class="option-item flex items-center group/opt relative mb-1" data-opt-id="${optId}">
-                    <div class="opt-label-box mr-2 min-w-[28px]"><span class="opt-label text-base md:text-lg font-bold text-gray-800 tp-item">${getCircleNumber(index)}</span></div>
+                    <div class="opt-label-box mr-2 min-w-[28px] flex items-center justify-center"><span class="opt-label text-base md:text-lg font-bold text-gray-800 tp-font">${getCircleNumber(index)}</span></div>
                     <div class="relative w-full flex items-center capture-input-wrapper">
-                        <input type="text" placeholder="선택지 입력" class="real-input ct-item w-full bg-white bg-opacity-70 border-b-2 border-gray-700 focus:border-blue-500 outline-none text-base md:text-lg text-gray-800 px-2 py-1.5 rounded transition-colors pr-8">
-                        <div class="fake-input hidden w-full border-b-2 border-gray-700 text-base md:text-lg text-gray-800 px-2 py-1.5 min-h-[36px] flex items-center ct-item"></div>
-                        <button type="button" class="remove-opt-btn capture-hide absolute right-1 text-gray-400 hover:text-red-500 font-bold opacity-0 group-hover/opt:opacity-100" title="삭제">✕</button>
+                        <input type="text" placeholder="선택지 입력" class="real-input w-full bg-white bg-opacity-70 border-b-2 border-gray-700 focus:border-blue-500 outline-none text-base md:text-lg text-gray-800 px-2 py-1.5 rounded transition-colors pr-8">
+                        <div class="fake-input hidden w-full border-b-2 border-gray-700 text-base md:text-lg text-gray-800 px-2 py-1.5 min-h-[36px] flex items-center"></div>
+                        <button type="button" class="remove-opt-btn capture-hide absolute right-1 text-gray-400 hover:text-red-500 font-bold opacity-0 group-hover/opt:opacity-100">✕</button>
                     </div>
                 </div>`;
             }
 
-            function createQuestionHTML(qId, qIndex) {
+            window.createQuestionHTML = function(qId, qIndex) {
+                const contentId = `q-content-${qId}`;
                 return `
-                <div class="question-item mb-5 relative group" data-q-id="${qId}">
-                    <div class="flex items-center">
-                        <div class="q-number-box mr-2 min-w-[24px]"><span class="q-number text-lg md:text-xl font-bold text-gray-800 tp-item">${qIndex}.</span></div>
-                        <div class="relative w-full capture-input-wrapper flex items-center">
-                            <textarea rows="1" placeholder="${qIndex}번째 문제를 입력하세요" class="real-input auto-expand ct-item q-input-style w-full bg-white bg-opacity-70 border-b-2 border-gray-400 focus:border-blue-500 outline-none text-base md:text-lg text-gray-800 px-3 resize-none rounded pr-8 shadow-sm overflow-hidden"></textarea>
-                            <div class="fake-input hidden w-full text-base md:text-lg text-gray-800 px-3 q-input-style min-h-[44px] whitespace-pre-wrap border-b-2 border-transparent flex items-center ct-item"></div>
-                            <button type="button" class="remove-q-btn capture-hide absolute top-2 right-2 text-red-500 bg-white bg-opacity-90 rounded-full w-6 h-6 flex items-center justify-center font-bold opacity-0 group-hover:opacity-100 shadow" title="삭제">✕</button>
+                <div class="question-item mb-6 relative group" data-q-id="${qId}">
+                    <div class="flex items-center justify-between mb-1">
+                         <div class="q-number-box mr-2 min-w-[24px] flex items-center justify-center"><span class="q-number text-lg md:text-xl font-bold text-gray-800 tp-font">${qIndex}.</span></div>
+                         <div class="font-toolbar capture-hide">
+                            <button class="font-choice-btn active" onclick="setItemFont('${contentId}', 'f-noto', this)">고딕</button>
+                            <button class="font-choice-btn" onclick="setItemFont('${contentId}', 'f-myeongjo', this)">명조</button>
+                            <button class="font-choice-btn" onclick="setItemFont('${contentId}', 'f-jua', this)">주아</button>
+                            <button class="font-choice-btn" onclick="setItemFont('${contentId}', 'f-gamja', this)">감자</button>
+                            <button class="font-choice-btn" onclick="setItemFont('${contentId}', 'f-black', this)">블랙</button>
                         </div>
                     </div>
-                    <div class="options-container pl-8">
-                        ${createOptionHTML(qId, ++optCounter, 0)}${createOptionHTML(qId, ++optCounter, 1)}${createOptionHTML(qId, ++optCounter, 2)}
+                    <div id="${contentId}" class="f-noto">
+                        <div class="relative w-full capture-input-wrapper flex items-center">
+                            <textarea rows="1" placeholder="문제를 먼저 고르고 입력하세요" class="real-input auto-expand q-input-style w-full bg-white bg-opacity-70 border-b-2 border-gray-400 focus:border-blue-500 outline-none text-base md:text-lg text-gray-800 px-3 resize-none rounded pr-8 shadow-sm overflow-hidden"></textarea>
+                            <div class="fake-input hidden w-full text-base md:text-lg text-gray-800 px-3 q-input-style min-h-[44px] whitespace-pre-wrap border-b-2 border-transparent flex items-center"></div>
+                            <button type="button" class="remove-q-btn capture-hide absolute top-2 right-2 text-red-500 bg-white bg-opacity-90 rounded-full w-6 h-6 flex items-center justify-center font-bold opacity-0 group-hover:opacity-100 shadow">✕</button>
+                        </div>
+                        <div class="options-container pl-8 mt-1">
+                            ${createOptionHTML(qId, ++optCounter, 0)}${createOptionHTML(qId, ++optCounter, 1)}${createOptionHTML(qId, ++optCounter, 2)}
+                        </div>
                     </div>
-                    <button type="button" class="add-opt-btn capture-hide mt-1 pl-8 text-xs text-blue-700 font-bold tp-item">+ 선택지 추가</button>
+                    <button type="button" class="add-opt-btn capture-hide mt-1 pl-8 text-xs text-blue-700 font-bold tp-font">+ 선택지 추가</button>
                 </div>`;
             }
 
@@ -379,7 +347,6 @@
             function updateNums() {
                 document.querySelectorAll('.question-item').forEach((q, idx) => {
                     q.querySelector('.q-number').textContent = `${idx + 1}.`;
-                    q.querySelector('textarea.real-input').placeholder = `${idx + 1}번째 문제를 입력하세요`;
                 });
             }
             function updateOptNums(q) {
