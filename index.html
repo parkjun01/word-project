@@ -5,51 +5,74 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Boast in God</title>
 
-    <!-- 구글 웹폰트: 진중하고 우아한 Playfair Display 폰트 추가 -->
+    <!-- 구글 웹폰트 -->
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
     
     <!-- Tailwind CSS (CDN) -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- html2canvas 라이브러리 (이미지 캡처용) -->
+    <!-- html2canvas 라이브러리 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
     <!-- Firebase SDK -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, onSnapshot, collection, addDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // 환경 변수 설정
-        const firebaseConfig = JSON.parse(__firebase_config);
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        window.firebaseApp = null; 
 
-        window.firebaseApp = { auth, db, appId, doc, setDoc, onSnapshot };
+        try {
+            if (typeof __firebase_config !== 'undefined') {
+                const firebaseConfig = JSON.parse(__firebase_config);
+                const app = initializeApp(firebaseConfig);
+                const auth = getAuth(app);
+                const db = getFirestore(app);
+                const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+                window.firebaseApp = { auth, db, appId, doc, setDoc, onSnapshot, collection, addDoc, deleteDoc, signInAnonymously, signInWithCustomToken, onAuthStateChanged };
+            }
+        } catch (error) {
+            console.warn("로컬 모드로 작동합니다.");
+        }
     </script>
 
     <style>
-        /* 새로운 폰트 클래스 적용 */
         .font-title { font-family: 'Playfair Display', serif; }
         .font-noto { font-family: 'Noto Sans KR', sans-serif; }
-        /* 캡처 시 가려야 할 요소들 */
         .capturing .capture-hide { display: none !important; }
+        
+        /* 갤러리 가로 스크롤바 디자인 */
+        .custom-scrollbar::-webkit-scrollbar { height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen flex flex-col items-center p-4 py-8 font-noto">
+<body class="bg-gray-100 min-h-screen flex flex-col items-center p-4 py-8 font-noto relative">
 
-    <!-- 컨트롤 바 -->
-    <div class="w-full max-w-lg mb-4 flex flex-col gap-2 bg-white p-3 rounded-lg shadow-sm">
-        <div class="flex justify-between items-center">
-            <label class="cursor-pointer bg-blue-50 hover:bg-blue-100 text-blue-700 px-4 py-2 rounded-md text-sm font-bold transition-colors border border-blue-200">
-                🖼️ 배경 이미지 변경 (최대 50MB)
-                <input type="file" id="bg-upload" class="hidden" accept="image/*">
-            </label>
-            <span id="save-status" class="text-xs text-gray-400 font-medium">상태: 연결 중...</span>
+    <!-- 커스텀 알림창 (Toast) -->
+    <div id="toast" class="fixed top-4 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-6 py-3 rounded-full shadow-lg transition-opacity duration-300 opacity-0 pointer-events-none z-50 font-bold text-sm">
+        알림 메시지
+    </div>
+
+    <!-- 컨트롤 바 (갤러리 포함) -->
+    <div class="w-full max-w-lg mb-4 flex flex-col gap-2 bg-white p-4 rounded-xl shadow-md border border-gray-200">
+        <div class="flex justify-between items-center mb-1">
+            <span class="font-bold text-gray-800 flex items-center gap-1">🖼️ 내 배경 갤러리</span>
+            <span id="save-status" class="text-xs text-blue-600 font-bold bg-blue-50 px-2 py-1 rounded-full">상태: 연결 중...</span>
         </div>
-        <p class="text-[10px] text-gray-400">* 1MB가 넘는 이미지는 저장 시 자동으로 압축됩니다.</p>
+        
+        <!-- 가로 스크롤 썸네일 영역 -->
+        <div id="image-gallery" class="flex gap-3 overflow-x-auto pb-2 pt-1 items-center min-h-[5rem] custom-scrollbar">
+            <div class="text-xs text-gray-400 italic px-2">데이터를 불러오는 중입니다...</div>
+        </div>
+
+        <label class="cursor-pointer mt-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg text-sm font-bold transition-colors text-center block w-full shadow-sm">
+            + 새 배경 이미지 추가 (최대 50MB)
+            <input type="file" id="bg-upload" class="hidden" accept="image/*">
+        </label>
+        <p class="text-[10px] text-gray-400 text-center">* 추가한 이미지는 갤러리에 영구 저장되어 언제든 다시 누르면 변경됩니다.</p>
     </div>
 
     <!-- 캡처될 영역 -->
@@ -62,13 +85,13 @@
 
         <!-- 상단 텍스트 및 입력 영역 -->
         <div class="relative z-10 p-6 md:p-8 flex flex-col flex-grow">
-            <!-- 폰트 스타일 변경 및 레이아웃 다듬기 -->
+            <!-- 폰트 스타일 적용 -->
             <div class="text-left font-title">
                 <h2 class="text-2xl md:text-3xl font-bold text-gray-700 italic">Boast not tomorrow</h2>
                 <h1 class="text-4xl md:text-5xl font-black text-blue-600 mt-2 tracking-wide">Boast in God</h1>
             </div>
 
-            <!-- 오늘의 주제: 한 줄 구성 -->
+            <!-- 오늘의 주제 -->
             <div class="mt-6 md:mt-8 flex items-center gap-3 capture-input-wrapper">
                 <label class="shrink-0 text-lg md:text-xl font-bold text-gray-800">오늘의 주제 :</label>
                 <div class="flex-grow relative">
@@ -77,6 +100,7 @@
                 </div>
             </div>
 
+            <!-- 오늘의 퀴즈 영역 -->
             <div class="mt-6 md:mt-8 flex-grow flex flex-col">
                 <h3 class="text-xl md:text-2xl font-bold text-gray-800 mb-4">오늘의 퀴즈</h3>
                 <div id="questions-list"></div>
@@ -92,15 +116,23 @@
     </button>
 
     <script type="module">
-        import { signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-
         document.addEventListener("DOMContentLoaded", async () => {
-            const { auth, db, appId, doc, setDoc, onSnapshot } = window.firebaseApp;
             const bgImg = document.getElementById('main-bg-img');
             const bgUpload = document.getElementById('bg-upload');
             const saveStatus = document.getElementById('save-status');
+            const galleryEl = document.getElementById('image-gallery');
+            const toast = document.getElementById('toast');
 
-            const compressImage = (base64Str, maxWidth = 1200) => {
+            let localGallery = []; // 오프라인용 메모리 갤러리
+
+            function showToast(msg, isError = false) {
+                toast.textContent = msg;
+                toast.className = `fixed top-4 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-full shadow-xl transition-opacity duration-300 pointer-events-none z-50 font-bold text-sm ${isError ? 'bg-red-600 text-white' : 'bg-gray-800 text-white'}`;
+                toast.classList.remove('opacity-0');
+                setTimeout(() => toast.classList.add('opacity-0'), 3000);
+            }
+
+            const compressImage = (base64Str, maxWidth = 1000) => {
                 return new Promise((resolve) => {
                     const img = new Image();
                     img.src = base64Str;
@@ -116,68 +148,146 @@
                         canvas.height = height;
                         const ctx = canvas.getContext('2d');
                         ctx.drawImage(img, 0, 0, width, height);
-                        resolve(canvas.toDataURL('image/jpeg', 0.7));
+                        resolve(canvas.toDataURL('image/jpeg', 0.6)); // 압축률 최적화
                     };
                 });
             };
 
-            const initAuth = async () => {
+            // 갤러리 렌더링 함수
+            function renderGallery(docs) {
+                galleryEl.innerHTML = '';
+                
+                if (docs.length === 0) {
+                    galleryEl.innerHTML = '<div class="text-xs text-gray-500 italic px-2">저장된 배경이 없습니다. 이미지를 추가해주세요.</div>';
+                    return;
+                }
+
+                docs.forEach(data => {
+                    const thumbWrapper = document.createElement('div');
+                    thumbWrapper.className = "relative flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 border-transparent hover:border-blue-500 cursor-pointer group shadow-sm transition-all transform hover:scale-105 bg-gray-200";
+                    
+                    const img = document.createElement('img');
+                    img.src = data.bgBase64;
+                    img.className = "w-full h-full object-cover";
+                    // 썸네일 클릭 시 메인 배경으로 적용
+                    img.onclick = () => { 
+                        bgImg.src = data.bgBase64; 
+                        showToast("배경이 변경되었습니다.");
+                    };
+
+                    const delBtn = document.createElement('button');
+                    delBtn.innerHTML = "✕";
+                    delBtn.className = "absolute top-0 right-0 bg-red-500 bg-opacity-80 text-white rounded-bl-lg w-5 h-5 flex items-center justify-center text-[10px] font-bold opacity-0 group-hover:opacity-100 transition-opacity hover:bg-opacity-100";
+                    
+                    // 삭제 버튼 로직
+                    delBtn.onclick = async (e) => {
+                        e.stopPropagation();
+                        if (window.firebaseApp && window.firebaseApp.auth.currentUser && data.id) {
+                            saveStatus.textContent = "상태: 삭제 중...";
+                            try {
+                                const { db, appId, doc, deleteDoc } = window.firebaseApp;
+                                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'backgrounds', data.id));
+                                saveStatus.textContent = "상태: 연결됨";
+                            } catch (err) {
+                                saveStatus.textContent = "상태: 삭제 실패";
+                                showToast("삭제 중 오류가 발생했습니다.", true);
+                            }
+                        } else {
+                            // 로컬 모드일 경우 메모리에서 삭제
+                            localGallery = localGallery.filter(item => item.id !== data.id);
+                            renderGallery(localGallery);
+                        }
+                    };
+
+                    thumbWrapper.appendChild(img);
+                    thumbWrapper.appendChild(delBtn);
+                    galleryEl.appendChild(thumbWrapper);
+                });
+            }
+
+            // 데이터베이스 연동 및 갤러리 실시간 감지
+            if (window.firebaseApp) {
+                const { auth, db, appId, collection, onSnapshot, signInAnonymously, signInWithCustomToken, onAuthStateChanged } = window.firebaseApp;
                 try {
                     if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                         await signInWithCustomToken(auth, __initial_auth_token);
                     } else {
                         await signInAnonymously(auth);
                     }
-                } catch (err) {
-                    saveStatus.textContent = "상태: 인증 오류";
-                }
-            };
-
-            await initAuth();
-
-            onAuthStateChanged(auth, (user) => {
-                if (user) {
-                    saveStatus.textContent = "상태: 연결됨";
-                    const configDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'config', 'main');
-                    onSnapshot(configDocRef, (snap) => {
-                        if (snap.exists() && snap.data().bgBase64) {
-                            bgImg.src = snap.data().bgBase64;
+                    
+                    onAuthStateChanged(auth, (user) => {
+                        if (user) {
+                            saveStatus.textContent = "상태: 연결됨";
+                            const bgCollectionRef = collection(db, 'artifacts', appId, 'public', 'data', 'backgrounds');
+                            
+                            // 갤러리 실시간 연동 (단순 쿼리 사용 후 JS 배열 정렬)
+                            onSnapshot(bgCollectionRef, (snap) => {
+                                const docs = [];
+                                snap.forEach(docSnap => docs.push({ id: docSnap.id, ...docSnap.data() }));
+                                // 최신순으로 정렬
+                                docs.sort((a, b) => b.timestamp - a.timestamp);
+                                renderGallery(docs);
+                            }, (err) => console.error("Snapshot error:", err));
                         }
-                    }, (err) => console.error("Snapshot error:", err));
+                    });
+                } catch (err) {
+                    saveStatus.textContent = "상태: 오프라인 모드";
+                    renderGallery(localGallery);
                 }
-            });
+            } else {
+                saveStatus.textContent = "상태: 로컬 모드";
+                renderGallery(localGallery);
+            }
 
+            // 이미지 업로드 및 갤러리 추가 기능
             bgUpload.addEventListener('change', (e) => {
                 const file = e.target.files[0];
                 if (!file) return;
+                
                 if (file.size > 50000000) { 
-                    alert("이미지 크기가 너무 큽니다. 50MB 이하의 이미지를 사용해 주세요.");
+                    showToast("이미지 크기가 너무 큽니다 (최대 50MB).", true);
                     return;
                 }
-                saveStatus.textContent = "상태: 처리 중...";
+
+                saveStatus.textContent = "상태: 최적화 중...";
                 const reader = new FileReader();
                 reader.onload = async (event) => {
                     let finalBase64 = event.target.result;
+                    
+                    // 800KB 이상일 경우 갤러리 저장용량(1MB) 제한에 맞춰 압축
                     if (file.size > 800000) {
-                        saveStatus.textContent = "상태: 압축 중...";
                         finalBase64 = await compressImage(finalBase64);
                     }
+                    
                     bgImg.src = finalBase64; 
-                    if (auth.currentUser) {
-                        saveStatus.textContent = "상태: 클라우드 저장 중...";
+
+                    if (window.firebaseApp && window.firebaseApp.auth.currentUser) {
+                        saveStatus.textContent = "상태: 갤러리 저장 중...";
                         try {
-                            const configDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'config', 'main');
-                            await setDoc(configDocRef, { bgBase64: finalBase64 }, { merge: true });
-                            saveStatus.textContent = "상태: 저장 완료";
+                            const { db, appId, collection, addDoc } = window.firebaseApp;
+                            const bgCollectionRef = collection(db, 'artifacts', appId, 'public', 'data', 'backgrounds');
+                            // 새 문서를 갤러리 컬렉션에 추가
+                            await addDoc(bgCollectionRef, { bgBase64: finalBase64, timestamp: Date.now() });
+                            saveStatus.textContent = "상태: 연결됨";
+                            showToast("갤러리에 성공적으로 추가되었습니다.");
                         } catch (err) {
-                            saveStatus.textContent = "상태: 저장 실패 (Firestore 오류)";
-                            console.error(err);
+                            saveStatus.textContent = "상태: 저장 실패";
+                            showToast("클라우드 저장에 실패했습니다.", true);
                         }
+                    } else {
+                        // 로컬 모드일 경우 메모리에 추가
+                        localGallery.unshift({ id: Date.now().toString(), bgBase64: finalBase64, timestamp: Date.now() });
+                        renderGallery(localGallery);
+                        saveStatus.textContent = "상태: 임시 저장 완료";
+                        showToast("이미지가 적용되었습니다.");
                     }
+                    // 동일한 이미지 연속 업로드 방지를 위해 초기화
+                    bgUpload.value = ''; 
                 };
                 reader.readAsDataURL(file);
             });
 
+            // UI 및 캡처 로직 (이전과 동일하게 유지)
             let qCounter = 0;
             let optCounter = 0;
             const questionsListEl = document.getElementById('questions-list');
@@ -186,7 +296,6 @@
 
             function getCircleNumber(index) { return String.fromCharCode(0x2460 + index); }
 
-            // 객관식 선택지: 라디오 버튼 제거, 밑줄 진하게 유지
             function createOptionHTML(qId, optId, index) {
                 return `
                 <div class="option-item flex items-center group/opt relative mb-2" data-opt-id="${optId}">
@@ -199,7 +308,6 @@
                 </div>`;
             }
 
-            // 문제 입력창: 부드러운 밑줄 및 선택지와의 간격 축소 (h-20 -> h-12, mt-3 -> mt-1)
             function createQuestionHTML(qId, qIndex) {
                 return `
                 <div class="question-item mb-8 relative group" data-q-id="${qId}">
@@ -255,7 +363,10 @@
             questionsListEl.insertAdjacentHTML('beforeend', createQuestionHTML(++qCounter, 3));
 
             captureBtn.addEventListener('click', async () => {
-                if (typeof html2canvas === 'undefined') return;
+                if (typeof html2canvas === 'undefined') {
+                    showToast("이미지 생성 기능을 준비 중입니다.", true);
+                    return;
+                }
                 const captureArea = document.getElementById('capture-area');
                 document.body.classList.add('capturing');
                 captureBtn.textContent = '이미지 생성 중...';
@@ -277,6 +388,8 @@
                     link.href = canvas.toDataURL("image/png");
                     link.download = `Boast_in_God_${new Date().toISOString().slice(0, 10)}.png`;
                     link.click();
+                } catch (err) {
+                    showToast("이미지 캡처 중 오류가 발생했습니다.", true);
                 } finally {
                     document.body.classList.remove('capturing');
                     document.querySelectorAll('.real-input').forEach(el => el.classList.remove('hidden'));
