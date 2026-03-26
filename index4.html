@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Boast in God</title>
+
+    <!-- 구글 웹폰트 -->
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS (CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- html2canvas 라이브러리 (이미지 캡처용) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <style>
+        /* 폰트 적용 클래스 */
+        .font-dancing { font-family: 'Dancing Script', cursive; }
+        .font-noto { font-family: 'Noto Sans KR', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col items-center p-4 py-10 font-noto">
+
+    <!-- 캡처될 영역 -->
+    <div id="capture-area" class="relative w-full max-w-2xl shadow-2xl rounded-xl overflow-hidden bg-white min-h-[800px] flex flex-col">
+        
+        <!-- 배경 이미지 -->
+        <img src="http://googleusercontent.com/image_generation_content/2" crossorigin="anonymous" alt="Boast in God Background" class="absolute inset-0 w-full h-full object-cover opacity-40 z-0">
+
+        <!-- 상단 텍스트 및 입력 영역 -->
+        <div class="relative z-10 p-6 md:p-8 flex flex-col flex-grow">
+            
+            <!-- 상단 타이틀 -->
+            <div class="text-left font-dancing">
+                <h2 class="text-2xl md:text-3xl font-bold text-gray-700">Boast not tomorrow</h2>
+                <h1 class="text-4xl md:text-5xl font-extrabold text-blue-500 mt-2">Boast in God</h1>
+            </div>
+
+            <!-- 오늘의 주제 -->
+            <div class="mt-6 md:mt-10 capture-input-wrapper">
+                <label class="block text-lg md:text-xl font-bold text-gray-800 mb-2">오늘의 주제 :</label>
+                <!-- 실제 입력창 -->
+                <input type="text" id="topic-input" value="아는 신앙과 행하는 신앙" placeholder="주제를 입력하세요" class="real-input w-full bg-white bg-opacity-70 border-b-2 border-gray-400 focus:border-blue-500 outline-none text-lg md:text-xl font-bold text-gray-800 px-2 py-1 rounded transition-colors">
+                <!-- 캡처 시 보여질 텍스트 박스 (평소엔 숨김) -->
+                <div class="fake-input hidden w-full text-lg md:text-xl font-bold text-gray-800 px-2 py-1 min-h-[40px] border-b-2 border-transparent"></div>
+            </div>
+
+            <!-- 오늘의 퀴즈 영역 -->
+            <div class="mt-6 md:mt-8 flex-grow flex flex-col">
+                <h3 class="text-xl md:text-2xl font-bold text-gray-800 mb-4">오늘의 퀴즈</h3>
+
+                <!-- 문제 리스트 컨테이너 -->
+                <div id="questions-list">
+                    <!-- 자바스크립트를 통해 이곳에 문제들이 추가됩니다. -->
+                </div>
+
+                <!-- 문제 추가 버튼 -->
+                <button id="add-q-btn" class="capture-hide mt-2 mb-6 py-2 px-4 border-2 border-dashed border-gray-400 text-gray-500 rounded-lg hover:bg-gray-50 hover:border-gray-600 hover:text-gray-800 transition-colors font-bold flex items-center justify-center gap-2">
+                    <span>+</span> 문제 추가하기
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 이미지 저장 버튼 -->
+    <button id="capture-btn" class="mt-8 px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-full shadow-lg transition-all transform hover:scale-105 font-noto">
+        이미지로 저장하기
+    </button>
+
+    <!-- 로직 스크립트 -->
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            let qCounter = 0; // 문제 고유 ID
+            let optCounter = 0; // 선택지 고유 ID
+            const questionsListEl = document.getElementById('questions-list');
+            const addQBtn = document.getElementById('add-q-btn');
+            const captureBtn = document.getElementById('capture-btn');
+
+            // 동그라미 번호 생성기 (①, ②, ③ ...)
+            function getCircleNumber(index) {
+                return String.fromCharCode(0x2460 + index); // 0x2460은 '①'
+            }
+
+            // [선택지] HTML 생성 함수
+            function createOptionHTML(qId, optId, index) {
+                return `
+                <div class="option-item flex items-center group/opt relative" data-opt-id="${optId}">
+                    <input type="radio" name="quiz-option-${qId}" value="${optId}" class="radio-input mr-2 h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-400">
+                    <label class="opt-label text-base md:text-lg font-bold mr-2 cursor-pointer min-w-[24px]">
+                        ${getCircleNumber(index)}
+                    </label>
+                    <div class="relative w-full flex items-center capture-input-wrapper">
+                        <input type="text" placeholder="선택지 입력" class="real-input w-full bg-white bg-opacity-60 border-b border-gray-400 focus:border-blue-500 outline-none text-base md:text-lg text-gray-800 px-2 py-1 rounded transition-colors pr-8">
+                        <div class="fake-input hidden w-full border-b border-gray-400 text-base md:text-lg text-gray-800 px-2 py-1 min-h-[36px]"></div>
+                        <button type="button" class="remove-opt-btn capture-hide absolute right-1 text-gray-400 hover:text-red-500 font-bold opacity-0 group-hover/opt:opacity-100 transition-opacity" title="선택지 삭제">✕</button>
+                    </div>
+                </div>`;
+            }
+
+            // [문제] HTML 생성 함수
+            function createQuestionHTML(qId, qIndex) {
+                return `
+                <div class="question-item mb-6 relative group" data-q-id="${qId}">
+                    <div class="flex items-start">
+                        <span class="q-number text-lg md:text-xl font-bold mr-2 mt-1">${qIndex}.</span>
+                        <div class="relative w-full capture-input-wrapper">
+                            <textarea placeholder="${qIndex}번째 문제를 입력하세요 (객관식)" class="real-input w-full h-20 bg-white bg-opacity-60 border-b border-gray-400 focus:border-blue-500 outline-none text-base md:text-lg text-gray-800 px-2 py-1 resize-none transition-colors rounded pr-8"></textarea>
+                            <div class="fake-input hidden w-full text-base md:text-lg text-gray-800 px-2 py-1 min-h-[5rem] whitespace-pre-wrap"></div>
+                            <button type="button" class="remove-q-btn capture-hide absolute top-2 right-2 text-red-500 hover:text-red-700 bg-white bg-opacity-80 rounded-full w-6 h-6 flex items-center justify-center font-bold opacity-0 group-hover:opacity-100 transition-opacity" title="문제 삭제">✕</button>
+                        </div>
+                    </div>
+                    
+                    <div class="options-container mt-3 pl-6 space-y-2">
+                        ${createOptionHTML(qId, ++optCounter, 0)}
+                        ${createOptionHTML(qId, ++optCounter, 1)}
+                        ${createOptionHTML(qId, ++optCounter, 2)}
+                    </div>
+                    
+                    <button type="button" class="add-opt-btn capture-hide mt-2 pl-6 text-sm text-blue-600 hover:text-blue-800 font-bold flex items-center gap-1 transition-colors">
+                        <span>+</span> 선택지 추가
+                    </button>
+                </div>`;
+            }
+
+            // 문제 번호 업데이트 (삭제 등으로 순서가 바뀌었을 때)
+            function updateQuestionNumbers() {
+                const questions = document.querySelectorAll('.question-item');
+                questions.forEach((q, idx) => {
+                    q.querySelector('.q-number').textContent = `${idx + 1}.`;
+                    q.querySelector('textarea.real-input').placeholder = `${idx + 1}번째 문제를 입력하세요 (객관식)`;
+                });
+            }
+
+            // 선택지 번호 업데이트 (삭제 등으로 순서가 바뀌었을 때)
+            function updateOptionNumbers(qItem) {
+                const options = qItem.querySelectorAll('.option-item');
+                options.forEach((opt, idx) => {
+                    opt.querySelector('.opt-label').textContent = getCircleNumber(idx);
+                });
+            }
+
+            // 이벤트 위임 (추가, 삭제 등)
+            questionsListEl.addEventListener('click', (e) => {
+                // 문제 삭제
+                const removeQBtn = e.target.closest('.remove-q-btn');
+                if (removeQBtn) {
+                    removeQBtn.closest('.question-item').remove();
+                    updateQuestionNumbers();
+                    return;
+                }
+
+                // 선택지 추가
+                const addOptBtn = e.target.closest('.add-opt-btn');
+                if (addOptBtn) {
+                    const qItem = addOptBtn.closest('.question-item');
+                    const qId = qItem.dataset.qId;
+                    const optionsContainer = qItem.querySelector('.options-container');
+                    const newIndex = optionsContainer.children.length;
+                    
+                    optionsContainer.insertAdjacentHTML('beforeend', createOptionHTML(qId, ++optCounter, newIndex));
+                    return;
+                }
+
+                // 선택지 삭제
+                const removeOptBtn = e.target.closest('.remove-opt-btn');
+                if (removeOptBtn) {
+                    const qItem = removeOptBtn.closest('.question-item');
+                    removeOptBtn.closest('.option-item').remove();
+                    updateOptionNumbers(qItem);
+                    return;
+                }
+            });
+
+            // 문제 추가 버튼 이벤트
+            addQBtn.addEventListener('click', () => {
+                const newIndex = document.querySelectorAll('.question-item').length + 1;
+                questionsListEl.insertAdjacentHTML('beforeend', createQuestionHTML(++qCounter, newIndex));
+            });
+
+            // 초기 문제 3개 생성
+            questionsListEl.insertAdjacentHTML('beforeend', createQuestionHTML(++qCounter, 1));
+            questionsListEl.insertAdjacentHTML('beforeend', createQuestionHTML(++qCounter, 2));
+            questionsListEl.insertAdjacentHTML('beforeend', createQuestionHTML(++qCounter, 3));
+
+
+            // ==========================================
+            // 이미지 캡처 로직
+            // ==========================================
+            captureBtn.addEventListener('click', async () => {
+                if (typeof html2canvas === 'undefined') {
+                    alert("이미지 생성 라이브러리를 불러오는 중입니다. 잠시 후 다시 시도해주세요.");
+                    return;
+                }
+
+                const captureArea = document.getElementById('capture-area');
+
+                // 1. 캡처 모드 UI 변경
+                captureBtn.disabled = true;
+                captureBtn.textContent = '이미지 생성 중...';
+                captureBtn.classList.add('opacity-50', 'cursor-not-allowed');
+
+                // 숨겨야 할 요소들 (추가/삭제 버튼) 가리기
+                document.querySelectorAll('.capture-hide').forEach(el => el.style.display = 'none');
+                
+                // 라디오 버튼 비활성화
+                document.querySelectorAll('.radio-input').forEach(el => el.disabled = true);
+
+                // 입력 폼 내용을 텍스트 Div로 교체
+                document.querySelectorAll('.capture-input-wrapper').forEach(wrapper => {
+                    const realInput = wrapper.querySelector('.real-input');
+                    const fakeInput = wrapper.querySelector('.fake-input');
+                    
+                    // 입력된 값을 div에 복사 (줄바꿈 포함)
+                    fakeInput.textContent = realInput.value || '\u00A0'; 
+                    
+                    realInput.classList.add('hidden');
+                    fakeInput.classList.remove('hidden');
+                });
+
+                // 브라우저 렌더링 대기
+                await new Promise(resolve => setTimeout(resolve, 150));
+
+                // 2. html2canvas 실행
+                try {
+                    const canvas = await html2canvas(captureArea, {
+                        useCORS: true,
+                        allowTaint: true,
+                        scale: 2, // 고해상도
+                        backgroundColor: '#ffffff'
+                    });
+
+                    // 3. 다운로드
+                    const imageURL = canvas.toDataURL("image/png");
+                    const link = document.createElement("a");
+                    link.href = imageURL;
+                    const today = new Date().toISOString().slice(0, 10);
+                    link.download = `Boast_in_God_${today}.png`;
+                    link.click();
+                } catch (error) {
+                    console.error("이미지 생성 오류:", error);
+                    alert("이미지 생성 중 문제가 발생했습니다.");
+                } finally {
+                    // 4. UI 원상 복구
+                    document.querySelectorAll('.capture-hide').forEach(el => el.style.display = '');
+                    document.querySelectorAll('.radio-input').forEach(el => el.disabled = false);
+
+                    document.querySelectorAll('.capture-input-wrapper').forEach(wrapper => {
+                        const realInput = wrapper.querySelector('.real-input');
+                        const fakeInput = wrapper.querySelector('.fake-input');
+                        realInput.classList.remove('hidden');
+                        fakeInput.classList.add('hidden');
+                    });
+
+                    captureBtn.disabled = false;
+                    captureBtn.textContent = '이미지로 저장하기';
+                    captureBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
