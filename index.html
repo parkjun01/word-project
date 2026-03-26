@@ -39,6 +39,7 @@
             line-height: 1.4; 
             padding-top: 0 !important;
             padding-bottom: 0 !important;
+            margin: 0 !important;
         }
         
         /* 텍스트 박스 높이 자동 조절 및 세로 중앙 정렬 */
@@ -47,6 +48,15 @@
             overflow: hidden;
             resize: none;
             display: block;
+            background: transparent;
+        }
+
+        /* 캡처용 텍스트 요소 스타일: 입력창과 동일한 정렬 유지 */
+        .fake-input {
+            display: none; /* 기본적으로 숨김 */
+            word-break: break-all;
+            width: 100%;
+            align-items: center;
         }
 
         /* 개별 폰트 툴바 스타일 */
@@ -77,6 +87,10 @@
             display: flex;
             align-items: center;
         }
+
+        /* 캡처 중일 때 입력창은 숨기고 텍스트 div는 보이게 함 */
+        .capturing-mode .real-input { display: none !important; }
+        .capturing-mode .fake-input { display: flex !important; }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col items-center p-4 py-8 tp-font relative">
@@ -131,7 +145,8 @@
                     <label class="shrink-0 text-lg md:text-xl font-bold text-gray-800 tp-font">오늘의 주제 :</label>
                     <div id="topic-input-wrap" class="flex-grow relative overflow-hidden flex items-center f-noto capture-input-wrapper">
                         <input type="text" id="topic-input" placeholder="주제를 입력하세요" class="real-input w-full bg-transparent border-b-2 border-gray-300 focus:border-blue-500 outline-none font-bold text-gray-800 px-2 py-1 rounded transition-colors" style="font-size: 20px;">
-                        <div class="fake-input hidden w-full font-bold text-gray-800 px-2 py-1 min-h-[1.4em] border-b-2 border-transparent whitespace-nowrap overflow-hidden items-center" style="font-size: 20px;"></div>
+                        <!-- 캡처 시 대체될 요소 (글자 잘림 방지) -->
+                        <div class="fake-input w-full font-bold text-gray-800 px-2 py-1 min-h-[1.4em] border-b-2 border-transparent whitespace-nowrap overflow-hidden"></div>
                     </div>
                 </div>
             </div>
@@ -171,7 +186,7 @@
             const galleryEl = document.getElementById('image-gallery');
             const toast = document.getElementById('toast');
             const topicInput = document.getElementById('topic-input');
-            const fakeTopicInput = topicInput.nextElementSibling;
+            const captureArea = document.getElementById('capture-area');
 
             let localGallery = JSON.parse(localStorage.getItem('my_gallery') || '[]');
             const savedBg = localStorage.getItem('saved_bg');
@@ -254,7 +269,8 @@
                     fontSize -= 0.5; measureSpan.style.fontSize = fontSize + 'px';
                 }
                 topicInput.style.fontSize = fontSize + 'px';
-                fakeTopicInput.style.fontSize = fontSize + 'px';
+                const fake = topicInput.nextElementSibling;
+                if(fake) fake.style.fontSize = fontSize + 'px';
             }
             topicInput.addEventListener('input', adjustTopicFontSize);
             window.addEventListener('resize', adjustTopicFontSize);
@@ -275,7 +291,7 @@
                     </div>
                     <div class="flex-grow relative flex items-center capture-input-wrapper">
                         <input type="text" placeholder="선택지 입력" class="real-input w-full bg-transparent border-b border-gray-200 focus:border-blue-300 outline-none text-base md:text-lg text-gray-800 px-2 py-1 transition-colors pr-8">
-                        <div class="fake-input w-full font-bold text-gray-800 px-2 py-1 min-h-[1.4em] hidden items-center border-b border-transparent"></div>
+                        <div class="fake-input w-full font-bold text-gray-800 px-2 py-1 min-h-[1.4em] items-center border-b border-transparent"></div>
                         <button type="button" class="remove-opt-btn capture-hide absolute right-1 text-gray-400 hover:text-red-500 font-bold opacity-0 group-hover/opt:opacity-100">✕</button>
                     </div>
                 </div>`;
@@ -300,7 +316,7 @@
                         </div>
                         <div id="${contentId}" class="flex-grow relative f-noto capture-input-wrapper flex items-center">
                             <textarea rows="1" placeholder="문제를 입력하세요" class="real-input auto-expand w-full bg-transparent border-b-2 border-gray-200 focus:border-blue-400 outline-none text-base md:text-lg text-gray-800 px-2 py-1 transition-colors pr-8"></textarea>
-                            <div class="fake-input w-full text-base md:text-lg text-gray-800 px-2 py-1 min-h-[1.4em] whitespace-pre-wrap border-b-2 border-transparent hidden items-center"></div>
+                            <div class="fake-input w-full text-base md:text-lg text-gray-800 px-2 py-1 min-h-[1.4em] whitespace-pre-wrap border-b-2 border-transparent items-center"></div>
                             <button type="button" class="remove-q-btn capture-hide absolute top-0 right-2 text-red-500 font-bold opacity-0 group-hover:opacity-100">✕</button>
                         </div>
                     </div>
@@ -347,34 +363,38 @@
             questionsListEl.insertAdjacentHTML('beforeend', createQuestionHTML(++qCounter, 1));
             questionsListEl.insertAdjacentHTML('beforeend', createQuestionHTML(++qCounter, 2));
 
+            // 이미지 저장(캡처) 로직 최적화
             captureBtn.onclick = async () => {
-                const area = document.getElementById('capture-area');
                 document.body.classList.add('capturing');
+                captureArea.classList.add('capturing-mode');
                 captureBtn.textContent = '이미지 생성 중...';
                 
+                // 모든 입력값 동기화
                 document.querySelectorAll('.capture-input-wrapper').forEach(w => {
-                    const r = w.querySelector('.real-input'), f = w.querySelector('.fake-input');
-                    f.textContent = r.value || '\u00A0'; 
-                    r.classList.add('hidden'); 
-                    f.classList.remove('hidden');
-                    f.style.display = 'flex';
+                    const real = w.querySelector('.real-input');
+                    const fake = w.querySelector('.fake-input');
+                    fake.textContent = real.value || '\u00A0';
                 });
 
-                window.scrollTo(0, 0); await new Promise(r => setTimeout(r, 400));
+                window.scrollTo(0, 0);
+                await new Promise(r => setTimeout(r, 500)); // 렌더링 대기
+
                 try {
-                    const canvas = await html2canvas(area, { useCORS: true, scale: 2, backgroundColor: '#ffffff' });
+                    const canvas = await html2canvas(captureArea, { 
+                        useCORS: true, 
+                        scale: 2, 
+                        backgroundColor: '#ffffff',
+                        logging: false
+                    });
                     const link = document.createElement("a");
                     link.href = canvas.toDataURL("image/png");
-                    link.download = `Quiz_${new Date().getTime()}.png`; link.click();
-                } catch (err) { showToast("이미지 저장 실패", true); }
-                finally {
+                    link.download = `BoastInGod_${new Date().getTime()}.png`;
+                    link.click();
+                } catch (err) { 
+                    showToast("이미지 저장 실패", true); 
+                } finally {
                     document.body.classList.remove('capturing');
-                    document.querySelectorAll('.capture-input-wrapper').forEach(w => {
-                        const r = w.querySelector('.real-input'), f = w.querySelector('.fake-input');
-                        r.classList.remove('hidden'); 
-                        f.classList.add('hidden');
-                        f.style.display = 'none';
-                    });
+                    captureArea.classList.remove('capturing-mode');
                     captureBtn.textContent = '이미지로 저장하기';
                 }
             };
