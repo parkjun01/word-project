@@ -20,14 +20,15 @@
         .font-noto { font-family: 'Noto Sans KR', sans-serif; }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen flex flex-col items-center p-4 py-10 font-noto">
+<body class="bg-gray-100 min-h-screen flex flex-col items-center p-4 py-8 font-noto">
 
-    <!-- 캡처될 영역 -->
-    <div id="capture-area" class="relative w-full max-w-2xl shadow-2xl rounded-xl overflow-hidden bg-white min-h-[800px] flex flex-col">
+    <!-- 캡처될 영역 (세로형 이미지에 맞게 max-w-lg로 너비 조정) -->
+    <div id="capture-area" class="relative w-full max-w-lg shadow-2xl rounded-xl overflow-hidden bg-white min-h-[850px] flex flex-col">
         
-        <!-- 워터마크 배경 이미지 -->
+        <!-- 워터마크 배경 이미지 (정확한 로컬 파일명 매칭 및 보안 속성 제거) -->
         <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
-            <img src="Gemini_Generated_Image_vy7q9vvy7q9vvy7q.jpg" onerror="this.src='https://images.unsplash.com/photo-1529070538774-1843cb3265df?q=80&w=2000&auto=format&fit=crop'" alt="Boast in God Watermark" class="w-full h-full object-cover opacity-15 select-none grayscale-[20%]">
+            <!-- 투명도를 30%로 주어 글씨가 잘 보이면서도 일러스트가 선명하게 깔리게 설정 -->
+            <img src="Gemini_Generated_Image_sed1dused1dused1.jpg" alt="Boast in God Background" class="w-full h-full object-cover opacity-30 select-none">
         </div>
 
         <!-- 상단 텍스트 및 입력 영역 -->
@@ -40,7 +41,7 @@
             </div>
 
             <!-- 오늘의 주제 -->
-            <div class="mt-6 md:mt-10 capture-input-wrapper">
+            <div class="mt-6 md:mt-8 capture-input-wrapper">
                 <label class="block text-lg md:text-xl font-bold text-gray-800 mb-2">오늘의 주제 :</label>
                 <!-- 실제 입력창 -->
                 <input type="text" id="topic-input" value="아는 신앙과 행하는 신앙" placeholder="주제를 입력하세요" class="real-input w-full bg-white bg-opacity-70 border-b-2 border-gray-400 focus:border-blue-500 outline-none text-lg md:text-xl font-bold text-gray-800 px-2 py-1 rounded transition-colors">
@@ -58,7 +59,7 @@
                 </div>
 
                 <!-- 문제 추가 버튼 -->
-                <button id="add-q-btn" class="capture-hide mt-2 mb-6 py-2 px-4 border-2 border-dashed border-gray-400 text-gray-500 rounded-lg hover:bg-gray-50 hover:border-gray-600 hover:text-gray-800 transition-colors font-bold flex items-center justify-center gap-2">
+                <button id="add-q-btn" class="capture-hide mt-2 mb-6 py-2 px-4 border-2 border-dashed border-gray-400 text-gray-600 rounded-lg hover:bg-white hover:bg-opacity-50 hover:border-gray-600 hover:text-gray-900 transition-colors font-bold flex items-center justify-center gap-2">
                     <span>+</span> 문제 추가하기
                 </button>
             </div>
@@ -87,13 +88,13 @@
             // [선택지] HTML 생성 함수
             function createOptionHTML(qId, optId, index) {
                 return `
-                <div class="option-item flex items-center group/opt relative" data-opt-id="${optId}">
-                    <input type="radio" name="quiz-option-${qId}" value="${optId}" class="radio-input mr-2 h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-400">
+                <div class="option-item flex items-center group/opt relative mb-2" data-opt-id="${optId}">
+                    <input type="radio" name="quiz-option-${qId}" value="${optId}" class="radio-input mr-2 h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-400 bg-white bg-opacity-70">
                     <label class="opt-label text-base md:text-lg font-bold mr-2 cursor-pointer min-w-[24px]">
                         ${getCircleNumber(index)}
                     </label>
                     <div class="relative w-full flex items-center capture-input-wrapper">
-                        <input type="text" placeholder="선택지 입력" class="real-input w-full bg-white bg-opacity-60 border-b border-gray-400 focus:border-blue-500 outline-none text-base md:text-lg text-gray-800 px-2 py-1 rounded transition-colors pr-8">
+                        <input type="text" placeholder="선택지 입력" class="real-input w-full bg-white bg-opacity-70 border-b border-gray-400 focus:border-blue-500 outline-none text-base md:text-lg text-gray-800 px-2 py-1 rounded transition-colors pr-8">
                         <div class="fake-input hidden w-full border-b border-gray-400 text-base md:text-lg text-gray-800 px-2 py-1 min-h-[36px]"></div>
                         <button type="button" class="remove-opt-btn capture-hide absolute right-1 text-gray-400 hover:text-red-500 font-bold opacity-0 group-hover/opt:opacity-100 transition-opacity" title="선택지 삭제">✕</button>
                     </div>
@@ -103,23 +104,23 @@
             // [문제] HTML 생성 함수
             function createQuestionHTML(qId, qIndex) {
                 return `
-                <div class="question-item mb-6 relative group" data-q-id="${qId}">
+                <div class="question-item mb-8 relative group" data-q-id="${qId}">
                     <div class="flex items-start">
                         <span class="q-number text-lg md:text-xl font-bold mr-2 mt-1">${qIndex}.</span>
                         <div class="relative w-full capture-input-wrapper">
-                            <textarea placeholder="${qIndex}번째 문제를 입력하세요 (객관식)" class="real-input w-full h-20 bg-white bg-opacity-60 border-b border-gray-400 focus:border-blue-500 outline-none text-base md:text-lg text-gray-800 px-2 py-1 resize-none transition-colors rounded pr-8"></textarea>
+                            <textarea placeholder="${qIndex}번째 문제를 입력하세요 (객관식)" class="real-input w-full h-20 bg-white bg-opacity-70 border-b border-gray-400 focus:border-blue-500 outline-none text-base md:text-lg text-gray-800 px-3 py-2 resize-none transition-colors rounded pr-8 shadow-sm"></textarea>
                             <div class="fake-input hidden w-full text-base md:text-lg text-gray-800 px-2 py-1 min-h-[5rem] whitespace-pre-wrap"></div>
-                            <button type="button" class="remove-q-btn capture-hide absolute top-2 right-2 text-red-500 hover:text-red-700 bg-white bg-opacity-80 rounded-full w-6 h-6 flex items-center justify-center font-bold opacity-0 group-hover:opacity-100 transition-opacity" title="문제 삭제">✕</button>
+                            <button type="button" class="remove-q-btn capture-hide absolute top-2 right-2 text-red-500 hover:text-red-700 bg-white bg-opacity-90 rounded-full w-6 h-6 flex items-center justify-center font-bold opacity-0 group-hover:opacity-100 transition-opacity shadow" title="문제 삭제">✕</button>
                         </div>
                     </div>
                     
-                    <div class="options-container mt-3 pl-6 space-y-2">
+                    <div class="options-container mt-3 pl-6">
                         ${createOptionHTML(qId, ++optCounter, 0)}
                         ${createOptionHTML(qId, ++optCounter, 1)}
                         ${createOptionHTML(qId, ++optCounter, 2)}
                     </div>
                     
-                    <button type="button" class="add-opt-btn capture-hide mt-2 pl-6 text-sm text-blue-600 hover:text-blue-800 font-bold flex items-center gap-1 transition-colors">
+                    <button type="button" class="add-opt-btn capture-hide mt-1 pl-6 text-sm text-blue-700 hover:text-blue-900 font-bold flex items-center gap-1 transition-colors">
                         <span>+</span> 선택지 추가
                     </button>
                 </div>`;
@@ -205,7 +206,7 @@
                 // 숨겨야 할 요소들 (추가/삭제 버튼) 가리기
                 document.querySelectorAll('.capture-hide').forEach(el => el.style.display = 'none');
                 
-                // 라디오 버튼 비활성화
+                // 라디오 버튼 모양만 남기고 기능 비활성화 (캡처 시 렌더링 최적화)
                 document.querySelectorAll('.radio-input').forEach(el => el.disabled = true);
 
                 // 입력 폼 내용을 텍스트 Div로 교체
@@ -220,19 +221,23 @@
                     fakeInput.classList.remove('hidden');
                 });
 
-                // 브라우저 렌더링 대기
-            await new Promise(resolve => setTimeout(resolve, 150));
+                // 스크롤을 맨 위로 올려 캡처 오류 방지
+                window.scrollTo(0, 0);
 
-            // 2. html2canvas 실행
-            try {
-                const canvas = await html2canvas(captureArea, {
-                    useCORS: true,
-                    scale: 2, // 고해상도
-                    backgroundColor: '#ffffff'
-                });
+                // 브라우저 렌더링 돔 반영 대기
+                await new Promise(resolve => setTimeout(resolve, 200));
 
-                // 3. 다운로드
-                const imageURL = canvas.toDataURL("image/png");
+                // 2. html2canvas 실행
+                try {
+                    const canvas = await html2canvas(captureArea, {
+                        useCORS: true,
+                        allowTaint: true,
+                        scale: 2, // 고해상도
+                        backgroundColor: '#ffffff'
+                    });
+
+                    // 3. 다운로드
+                    const imageURL = canvas.toDataURL("image/png");
                     const link = document.createElement("a");
                     link.href = imageURL;
                     const today = new Date().toISOString().slice(0, 10);
