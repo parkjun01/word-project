@@ -11,7 +11,7 @@
     <!-- Tailwind CSS (CDN) -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- html2canvas 라이브러리 (캡처용) -->
+    <!-- html2canvas 라이브러리 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
     <style>
@@ -28,7 +28,7 @@
         .f-gamja { font-family: 'Gamja Flower', cursive !important; }
         .f-black { font-family: 'Black Han Sans', sans-serif !important; }
 
-        /* 입력 텍스트 스타일 */
+        /* 입력 스타일 공통 */
         .real-input, .fake-input { 
             line-height: 1.5; 
             padding: 0 !important;
@@ -43,30 +43,39 @@
             overflow: hidden;
             resize: none;
             display: block;
-            width: 100%;
         }
 
-        /* 캡처 시 중복 방지 핵심 로직 */
+        /* [핵심] 캡처 시 레이아웃 고정 로직 */
         .fake-input { 
             display: none; 
             word-break: break-all; 
             white-space: pre-wrap; 
             align-items: center;
         }
-        /* 캡처 모드일 때 real-input은 숨기고 fake-input만 표시하여 겹침 현상 제거 */
+        
+        /* 캡처 중일 때 입력창을 물리적으로 제거하고 텍스트 레이어로 완벽 대체 */
         .is-capturing .real-input { display: none !important; }
         .is-capturing .fake-input { display: flex !important; }
 
-        /* 문제 박스 디자인 */
+        /* 문제 박스 디자인: 가시성 극대화 */
         .question-text-box {
-            background-color: rgba(255, 255, 255, 0.95);
+            background-color: rgba(255, 255, 255, 0.96); /* 거의 불투명하게 설정 */
             border-radius: 12px;
             padding: 16px 20px;
-            border: 2px solid #3b82f6;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            border: 2px solid #3b82f6; /* 선명한 파란색 테두리 */
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            transition: all 0.2s;
         }
 
-        /* 폰트 툴바 */
+        /* 캡처 시 박스 스타일 강화 (렌더링 오류 방지) */
+        .is-capturing .question-text-box {
+            background-color: #ffffff !important;
+            border: 2px solid #3b82f6 !important;
+            box-shadow: none !important; /* 캡처 시 그림자 번짐 방지 */
+        }
+
+        /* 폰트 툴바 스타일 */
         .font-toolbar { display: flex; gap: 4px; margin-bottom: 4px; }
         .font-choice-btn {
             background: #f8fafc;
@@ -110,7 +119,7 @@
     <!-- 캡처될 영역 -->
     <div id="capture-area" class="relative w-full max-w-lg shadow-2xl rounded-xl overflow-hidden bg-white min-h-[850px] flex flex-col border border-gray-100">
         
-        <!-- 배경 레이어 -->
+        <!-- 배경 이미지 레이어 -->
         <div id="main-bg-wrap" class="absolute inset-0 pointer-events-none z-0 opacity-40">
             <img id="main-bg-img" src="Gemini_Generated_Image_sed1dused1dused1.png.jpg" alt="Background" class="w-full h-full object-cover object-center select-none" onerror="this.src='https://images.unsplash.com/photo-1499209974431-9dac3adaf471?auto=format&fit=crop&w=1200&q=80'">
         </div>
@@ -122,7 +131,7 @@
                 <h1 class="text-4xl md:text-5xl font-black text-blue-600 mt-2 tracking-wide">Boast in God</h1>
             </div>
 
-            <!-- 주제 입력 영역 -->
+            <!-- 주제 영역 -->
             <div id="topic-container" class="mb-10">
                 <div class="flex justify-end mb-1">
                     <div class="font-toolbar capture-hide">
@@ -136,7 +145,6 @@
                 <div class="v-center-row gap-3">
                     <label class="shrink-0 text-lg md:text-xl font-bold text-gray-800 tp-font">오늘의 주제 :</label>
                     <div id="topic-input-wrap" class="flex-grow relative f-noto capture-input-wrapper v-center-row">
-                        <!-- Placeholder 제거됨 -->
                         <input type="text" id="topic-input" class="real-input w-full border-b-2 border-gray-400 focus:border-blue-500 outline-none font-bold text-gray-800 px-1" style="font-size: 20px;">
                         <div class="fake-input font-bold text-gray-800 px-1 border-b-2 border-transparent" style="font-size: 20px;"></div>
                     </div>
@@ -201,8 +209,7 @@
                             else { w = Math.round((w * maxSize) / h); h = maxSize; }
                         }
                         canvas.width = w; canvas.height = h;
-                        const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0, w, h);
+                        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
                         resolve(canvas.toDataURL('image/jpeg', 0.85)); 
                     };
                 });
@@ -274,7 +281,6 @@
                         <span>${getCircleNumber(index)}</span>
                     </div>
                     <div class="flex-grow relative capture-input-wrapper v-center-row">
-                        <!-- Placeholder 제거됨 -->
                         <input type="text" class="real-input w-full border-b border-gray-200 focus:border-blue-400 outline-none text-base text-gray-800 px-1">
                         <div class="fake-input text-base text-gray-800 px-1 border-b border-transparent"></div>
                     </div>
@@ -295,12 +301,12 @@
                             <button class="font-choice-btn" onclick="setItemFont('${contentId}', 'f-black', this)">블랙</button>
                         </div>
                     </div>
+                    <!-- 문제 박스 영역 -->
                     <div class="question-text-box v-center-row">
                         <div class="mr-3 min-w-[28px] flex items-center justify-center font-bold text-blue-700 tp-font text-xl">
                             <span class="q-num-label">${qIndex}.</span>
                         </div>
                         <div id="${contentId}" class="flex-grow relative f-noto capture-input-wrapper v-center-row">
-                            <!-- Placeholder 제거됨 -->
                             <textarea rows="1" class="real-input auto-expand w-full focus:outline-none text-lg font-bold text-gray-800"></textarea>
                             <div class="fake-input text-lg font-bold text-gray-800"></div>
                         </div>
@@ -321,12 +327,12 @@
                 }
             });
 
-            // 초기 설정: 1, 2번 주관식 / 3번 객관식
+            // 초기 설정
             questionsListEl.insertAdjacentHTML('beforeend', createQuestionHTML(++qCounter, 1, 'subjective'));
             questionsListEl.insertAdjacentHTML('beforeend', createQuestionHTML(++qCounter, 2, 'subjective'));
             questionsListEl.insertAdjacentHTML('beforeend', createQuestionHTML(++qCounter, 3, 'objective'));
 
-            // 이미지 저장 로직 (가장 안정적인 방식)
+            // 이미지 저장 로직 최적화
             captureBtn.onclick = async () => {
                 if (captureBtn.disabled) return;
                 
@@ -337,7 +343,7 @@
                 
                 window.scrollTo(0, 0);
 
-                // 입력값을 텍스트 레이어로 전이 (중복 방지 핵심)
+                // 모든 입력창의 텍스트를 정적 요소로 전이
                 document.querySelectorAll('.capture-input-wrapper').forEach(w => {
                     const real = w.querySelector('.real-input'), fake = w.querySelector('.fake-input');
                     if (real && fake) {
@@ -346,11 +352,16 @@
                     }
                 });
 
+                // 브라우저 렌더링 동기화 대기
                 await new Promise(r => setTimeout(r, 600));
 
                 try {
                     const canvas = await html2canvas(captureArea, { 
-                        useCORS: true, scale: 2, backgroundColor: '#ffffff', logging: false 
+                        useCORS: true, 
+                        scale: 2, 
+                        backgroundColor: '#ffffff', 
+                        logging: false,
+                        allowTaint: true
                     });
                     
                     canvas.toBlob((blob) => {
@@ -365,11 +376,12 @@
                         document.body.appendChild(link);
                         link.click();
                         document.body.removeChild(link);
-                        setTimeout(() => URL.revokeObjectURL(url), 100);
+                        setTimeout(() => URL.revokeObjectURL(url), 200);
                         showToast("이미지가 기기에 저장되었습니다.");
                     }, "image/png");
 
                 } catch (err) { 
+                    console.error(err);
                     showToast("이미지 저장 중 오류가 발생했습니다."); 
                 } finally {
                     document.body.classList.remove('capturing');
