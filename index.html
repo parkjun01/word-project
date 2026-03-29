@@ -18,49 +18,57 @@
         .font-title { font-family: 'Playfair Display', serif; }
         .capturing .capture-hide { display: none !important; }
         
-        /* [중요] 템플릿 기본 폰트 (라벨, 번호 등 고정) */
+        /* 템플릿 기본 폰트 (고정 요소) */
         .tp-font { font-family: 'Noto Sans KR', sans-serif !important; }
 
-        /* [중요] 사용자 입력 내용 폰트 정의 */
+        /* 사용자 입력 내용 폰트 정의 */
         .f-noto { font-family: 'Noto Sans KR', sans-serif !important; }
         .f-myeongjo { font-family: 'Nanum Myeongjo', serif !important; }
         .f-jua { font-family: 'Jua', sans-serif !important; }
         .f-gamja { font-family: 'Gamja Flower', cursive !important; }
         .f-black { font-family: 'Black Han Sans', sans-serif !important; }
 
-        /* 갤러리 가로 스크롤바 디자인 */
+        /* 갤러리 디자인 */
         .custom-scrollbar::-webkit-scrollbar { height: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
-        /* 입력 텍스트 줄높이 및 정렬 보정 */
+        /* 입력 텍스트 스타일 */
         .real-input, .fake-input { 
-            line-height: 1.4; 
-            padding: 2px 0 !important;
+            line-height: 1.5; 
+            padding: 0 !important;
             margin: 0 !important;
+            background: transparent;
+            border: none;
+            width: 100%;
         }
         
-        /* 텍스트 박스 높이 자동 조절 및 세로 중앙 정렬 */
         textarea.auto-expand {
-            min-height: 1.4em;
+            min-height: 1.5em;
             overflow: hidden;
             resize: none;
             display: block;
-            background: transparent;
+            width: 100%;
         }
 
-        /* 캡처 중복 방지를 위한 가시성 제어 */
-        .fake-input { display: none; width: 100%; word-break: break-all; }
-        .is-capturing .real-input { display: none !important; }
-        .is-capturing .fake-input { display: block !important; }
-
-        /* 개별 폰트 툴바 스타일 */
-        .font-toolbar {
-            display: flex;
-            gap: 4px;
-            margin-bottom: 2px;
+        /* 캡처 시 글자 중복 및 잘림 방지 로직 */
+        .fake-input { 
+            display: none; 
+            word-break: break-all; 
+            white-space: pre-wrap; 
+            align-items: center;
         }
+        /* 캡처 모드일 때 real-input은 숨기고 fake-input만 표시 */
+        .is-capturing .real-input { 
+            display: none !important; 
+        }
+        .is-capturing .fake-input { 
+            display: flex !important; 
+        }
+
+        /* 폰트 툴바 */
+        .font-toolbar { display: flex; gap: 4px; margin-bottom: 2px; }
         .font-choice-btn {
             background: #f8fafc;
             color: #64748b;
@@ -71,59 +79,62 @@
             border: 1px solid #e2e8f0;
             transition: all 0.2s;
         }
-        .font-choice-btn:hover { background: #f1f5f9; }
-        .font-choice-btn.active {
-            background: #3b82f6;
-            color: white;
-            border-color: #3b82f6;
-        }
+        .font-choice-btn.active { background: #3b82f6; color: white; border-color: #3b82f6; }
         
-        /* 세로 중앙 정렬 레이아웃 */
+        /* 문제 전용 박스 디자인 (강화됨) */
+        .question-text-box {
+            background-color: rgba(255, 255, 255, 0.92);
+            border-radius: 12px;
+            padding: 14px 18px;
+            border: 2px solid #3b82f6;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+        }
+
+        /* 세로 중앙 정렬 row */
         .v-center-row {
             display: flex;
-            align-items: center; /* 자식 요소들을 세로 중앙으로 정렬 */
+            align-items: center;
         }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col items-center p-4 py-8 tp-font relative">
 
-    <!-- 커스텀 알림창 -->
     <div id="toast" class="fixed top-4 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-6 py-3 rounded-full shadow-lg transition-opacity duration-300 opacity-0 pointer-events-none z-50 font-bold text-sm">
         알림 메시지
     </div>
 
-    <!-- 배경 갤러리 컨트롤 바 -->
+    <!-- 배경 갤러리 설정 -->
     <div class="w-full max-w-lg mb-4 bg-white p-4 rounded-xl shadow-md border border-gray-200">
         <div class="flex justify-between items-center mb-1">
-            <span class="font-bold text-gray-800 flex items-center gap-1 text-sm">🖼️ 배경 갤러리</span>
+            <span class="font-bold text-gray-800 flex items-center gap-1 text-sm">🖼️ 배경 갤러리 (개별 저장)</span>
             <span id="save-status" class="text-[10px] text-blue-600 font-bold bg-blue-50 px-2 py-1 rounded-full">상태: 준비 완료</span>
         </div>
         <div id="image-gallery" class="flex gap-3 overflow-x-auto pb-2 pt-1 items-center min-h-[5rem] custom-scrollbar">
             <div class="text-xs text-gray-400 italic px-2">데이터를 불러오는 중입니다...</div>
         </div>
         <label class="cursor-pointer mt-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg text-sm font-bold transition-colors text-center block w-full shadow-sm">
-            + 새 배경 추가
+            + 새 배경 이미지 추가
             <input type="file" id="bg-upload" class="hidden" accept="image/*">
         </label>
     </div>
 
-    <!-- 캡처될 영역 -->
+    <!-- 캡처 영역 -->
     <div id="capture-area" class="relative w-full max-w-lg shadow-2xl rounded-xl overflow-hidden bg-white min-h-[850px] flex flex-col border border-gray-100">
         
-        <!-- 워터마크 배경 이미지 -->
-        <div id="main-bg-wrap" class="absolute inset-0 pointer-events-none z-0 opacity-30">
+        <!-- 배경 이미지 -->
+        <div id="main-bg-wrap" class="absolute inset-0 pointer-events-none z-0 opacity-40">
             <img id="main-bg-img" src="Gemini_Generated_Image_sed1dused1dused1.png.jpg" alt="Background" class="w-full h-full object-cover object-center select-none">
         </div>
 
         <div class="relative z-10 p-6 md:p-8 flex flex-col flex-grow">
-            <!-- 고정 제목 -->
-            <div class="text-left font-title">
+            <!-- 상단 제목 -->
+            <div class="text-left font-title mb-8">
                 <h2 class="text-2xl md:text-3xl font-bold text-gray-700 italic">Boast not tomorrow</h2>
                 <h1 class="text-4xl md:text-5xl font-black text-blue-600 mt-2 tracking-wide">Boast in God</h1>
             </div>
 
-            <!-- 오늘의 주제 섹션 -->
-            <div id="topic-container" class="mt-6 md:mt-8 flex flex-col">
+            <!-- 오늘의 주제 -->
+            <div id="topic-container" class="mb-10">
                 <div class="flex justify-end mb-1">
                     <div class="font-toolbar capture-hide">
                         <button class="font-choice-btn active" onclick="setItemFont('topic-input-wrap', 'f-noto', this)">고딕</button>
@@ -135,25 +146,25 @@
                 </div>
                 <div class="v-center-row gap-3">
                     <label class="shrink-0 text-lg md:text-xl font-bold text-gray-800 tp-font">오늘의 주제 :</label>
-                    <div id="topic-input-wrap" class="flex-grow relative overflow-hidden f-noto capture-input-wrapper">
-                        <input type="text" id="topic-input" placeholder="주제를 입력하세요" class="real-input w-full bg-transparent border-b-2 border-gray-300 focus:border-blue-500 outline-none font-bold text-gray-800 px-2 py-1 transition-colors" style="font-size: 20px;">
-                        <div class="fake-input font-bold text-gray-800 px-2 py-1 border-b-2 border-transparent whitespace-nowrap overflow-hidden" style="font-size: 20px;"></div>
+                    <div id="topic-input-wrap" class="flex-grow relative f-noto capture-input-wrapper v-center-row">
+                        <input type="text" id="topic-input" placeholder="주제를 입력하세요" class="real-input w-full border-b-2 border-gray-400 focus:border-blue-500 outline-none font-bold text-gray-800 px-1 transition-colors" style="font-size: 20px;">
+                        <div class="fake-input font-bold text-gray-800 px-1 border-b-2 border-transparent" style="font-size: 20px;"></div>
                     </div>
                 </div>
             </div>
 
-            <!-- 오늘의 퀴즈 영역 -->
-            <div class="mt-6 md:mt-8 flex-grow flex flex-col">
-                <h3 class="text-xl md:text-2xl font-bold text-gray-800 mb-4 tp-font">오늘의 퀴즈</h3>
+            <!-- 퀴즈 리스트 영역 -->
+            <div class="flex-grow flex flex-col">
+                <h3 class="text-xl font-bold text-gray-800 mb-4 tp-font">오늘의 퀴즈</h3>
                 <div id="questions-list"></div>
-                <button id="add-q-btn" class="capture-hide mt-2 mb-6 py-2 px-4 border-2 border-dashed border-gray-400 text-gray-600 rounded-lg hover:bg-white hover:bg-opacity-50 hover:border-gray-600 hover:text-gray-900 transition-colors font-bold flex items-center justify-center gap-2 tp-font">
+                <button id="add-q-btn" class="capture-hide mt-4 mb-8 py-3 border-2 border-dashed border-gray-400 text-gray-600 rounded-xl hover:bg-white hover:bg-opacity-50 transition-colors font-bold flex items-center justify-center gap-2 tp-font">
                     <span>+</span> 문제 추가하기
                 </button>
             </div>
         </div>
     </div>
 
-    <button id="capture-btn" class="mt-8 px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-full shadow-lg transition-all transform hover:scale-105">
+    <button id="capture-btn" class="mt-8 mb-12 px-10 py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-full shadow-lg transition-all transform hover:scale-105">
         이미지로 저장하기
     </button>
 
@@ -183,27 +194,26 @@
             const savedBg = localStorage.getItem('saved_bg');
             if (savedBg) bgImg.src = savedBg;
 
-            function showToast(msg, isError = false) {
+            function showToast(msg) {
                 toast.textContent = msg;
-                toast.className = `fixed top-4 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-full shadow-xl transition-opacity duration-300 pointer-events-none z-50 font-bold text-sm ${isError ? 'bg-red-600 text-white' : 'bg-gray-800 text-white'}`;
                 toast.classList.remove('opacity-0');
-                setTimeout(() => toast.classList.add('opacity-0'), 3000);
+                setTimeout(() => toast.classList.add('opacity-0'), 2500);
             }
 
-            const autoAdjustImage = (base64Str, maxSize = 1200) => {
+            const autoAdjustImage = (base64Str) => {
                 return new Promise((resolve) => {
                     const img = new Image();
                     img.src = base64Str;
                     img.onload = () => {
                         const canvas = document.createElement('canvas');
-                        let w = img.width, h = img.height;
+                        let w = img.width, h = img.height, maxSize = 1200;
                         if (w > maxSize || h > maxSize) {
                             if (w > h) { h = Math.round((h * maxSize) / w); w = maxSize; }
                             else { w = Math.round((w * maxSize) / h); h = maxSize; }
                         }
                         canvas.width = w; canvas.height = h;
                         canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-                        resolve(canvas.toDataURL('image/jpeg', 0.8)); 
+                        resolve(canvas.toDataURL('image/jpeg', 0.85)); 
                     };
                 });
             };
@@ -211,19 +221,15 @@
             function renderGallery() {
                 galleryEl.innerHTML = '';
                 if (localGallery.length === 0) {
-                    galleryEl.innerHTML = '<div class="text-[10px] text-gray-500 italic px-2">배경을 추가해주세요.</div>';
+                    galleryEl.innerHTML = '<div class="text-[10px] text-gray-400 italic px-2">배경을 추가하세요.</div>';
                     return;
                 }
                 localGallery.forEach(data => {
                     const thumb = document.createElement('div');
-                    thumb.className = "relative flex-shrink-0 w-14 h-14 rounded-lg overflow-hidden border-2 border-transparent hover:border-blue-500 cursor-pointer shadow-sm transition-all bg-gray-200";
+                    thumb.className = "relative flex-shrink-0 w-14 h-14 rounded-lg overflow-hidden border-2 border-transparent hover:border-blue-500 cursor-pointer shadow-sm";
                     const img = document.createElement('img');
                     img.src = data.bgBase64; img.className = "w-full h-full object-cover";
-                    img.onclick = () => { 
-                        bgImg.src = data.bgBase64;
-                        localStorage.setItem('saved_bg', data.bgBase64);
-                        showToast("배경이 변경되었습니다.");
-                    };
+                    img.onclick = () => { bgImg.src = data.bgBase64; localStorage.setItem('saved_bg', data.bgBase64); };
                     thumb.append(img); galleryEl.appendChild(thumb);
                 });
             }
@@ -237,22 +243,22 @@
                     bgImg.src = final;
                     localStorage.setItem('saved_bg', final);
                     localGallery.unshift({ id: Date.now().toString(), bgBase64: final });
-                    if (localGallery.length > 5) localGallery.pop(); 
+                    if (localGallery.length > 6) localGallery.pop(); 
                     localStorage.setItem('my_gallery', JSON.stringify(localGallery));
                     renderGallery();
                 };
                 reader.readAsDataURL(file);
             });
 
-            // --- 주제 크기 조절 ---
             const measureSpan = document.createElement('span');
             measureSpan.style.visibility = 'hidden'; measureSpan.style.position = 'absolute'; measureSpan.style.whiteSpace = 'nowrap';
-            measureSpan.className = 'font-bold px-2'; document.body.appendChild(measureSpan);
+            document.body.appendChild(measureSpan);
 
             window.adjustTopicFontSize = function() {
-                const maxWidth = topicInput.clientWidth - 16;
+                const maxWidth = topicInput.clientWidth - 10;
                 if (maxWidth <= 0) return;
                 measureSpan.style.fontFamily = window.getComputedStyle(topicInput).fontFamily;
+                measureSpan.style.fontWeight = "bold";
                 measureSpan.textContent = topicInput.value || topicInput.placeholder;
                 let fontSize = 20;
                 measureSpan.style.fontSize = fontSize + 'px';
@@ -264,26 +270,22 @@
                 if(fake) fake.style.fontSize = fontSize + 'px';
             }
             topicInput.addEventListener('input', adjustTopicFontSize);
-            window.addEventListener('resize', adjustTopicFontSize);
 
-            // --- 퀴즈 및 정렬 ---
             let qCounter = 0, optCounter = 0;
             const questionsListEl = document.getElementById('questions-list');
-            const addQBtn = document.getElementById('add-q-btn');
-            const captureBtn = document.getElementById('capture-btn');
 
             function getCircleNumber(index) { return String.fromCharCode(0x2460 + index); }
 
             function createOptionHTML(qId, optId, index) {
                 return `
                 <div class="option-item v-center-row group/opt relative mb-1" data-opt-id="${optId}">
-                    <div class="mr-2 min-w-[28px] flex items-center justify-center font-bold text-gray-800 tp-font">
+                    <div class="mr-2 min-w-[24px] flex items-center justify-center font-bold text-gray-700 tp-font text-sm">
                         <span>${getCircleNumber(index)}</span>
                     </div>
-                    <div class="flex-grow relative capture-input-wrapper">
-                        <input type="text" placeholder="선택지 입력" class="real-input w-full bg-transparent border-b border-gray-200 focus:border-blue-300 outline-none text-base md:text-lg text-gray-800 px-2 transition-colors pr-8">
-                        <div class="fake-input text-base md:text-lg text-gray-800 px-2 border-b border-transparent"></div>
-                        <button type="button" class="remove-opt-btn capture-hide absolute right-1 top-0 text-gray-400 hover:text-red-500 font-bold opacity-0 group-hover/opt:opacity-100">✕</button>
+                    <div class="flex-grow relative capture-input-wrapper v-center-row">
+                        <input type="text" placeholder="선택지 입력" class="real-input w-full border-b border-gray-200 focus:border-blue-400 outline-none text-base text-gray-800">
+                        <div class="fake-input text-base text-gray-800"></div>
+                        <button type="button" class="remove-opt-btn capture-hide absolute -right-6 text-gray-400 hover:text-red-500 font-bold opacity-0 group-hover/opt:opacity-100">✕</button>
                     </div>
                 </div>`;
             }
@@ -291,7 +293,7 @@
             window.createQuestionHTML = function(qId, qIndex) {
                 const contentId = `q-content-${qId}`;
                 return `
-                <div class="question-item mb-8 relative group" data-q-id="${qId}">
+                <div class="mb-6 relative group" data-q-id="${qId}">
                     <div class="flex justify-end mb-1">
                         <div class="font-toolbar capture-hide">
                             <button class="font-choice-btn active" onclick="setItemFont('${contentId}', 'f-noto', this)">고딕</button>
@@ -301,43 +303,45 @@
                             <button class="font-choice-btn" onclick="setItemFont('${contentId}', 'f-black', this)">블랙</button>
                         </div>
                     </div>
-                    <div class="v-center-row">
-                        <div class="mr-2 min-w-[24px] flex items-center justify-center font-bold text-gray-800 tp-font text-lg md:text-xl">
+                    
+                    <div class="question-text-box v-center-row mb-3">
+                        <div class="mr-3 min-w-[28px] flex items-center justify-center font-bold text-blue-700 tp-font text-xl">
                             <span>${qIndex}.</span>
                         </div>
-                        <div id="${contentId}" class="flex-grow relative f-noto capture-input-wrapper">
-                            <textarea rows="1" placeholder="문제를 입력하세요" class="real-input auto-expand w-full bg-transparent border-b-2 border-gray-200 focus:border-blue-400 outline-none text-base md:text-lg text-gray-800 px-2 transition-colors pr-8"></textarea>
-                            <div class="fake-input text-base md:text-lg text-gray-800 px-2 whitespace-pre-wrap border-b-2 border-transparent"></div>
-                            <button type="button" class="remove-q-btn capture-hide absolute top-0 right-2 text-red-500 font-bold opacity-0 group-hover:opacity-100">✕</button>
+                        <div id="${contentId}" class="flex-grow relative f-noto capture-input-wrapper v-center-row">
+                            <textarea rows="1" placeholder="문제를 입력하세요" class="real-input auto-expand w-full focus:outline-none text-lg font-bold text-gray-800"></textarea>
+                            <div class="fake-input text-lg font-bold text-gray-800"></div>
+                            <button type="button" class="remove-q-btn capture-hide absolute -right-12 text-red-500 font-bold opacity-0 group-hover:opacity-100">삭제</button>
                         </div>
                     </div>
-                    <div class="options-container pl-8 mt-2">
+
+                    <div class="options-container pl-4">
                         ${createOptionHTML(qId, ++optCounter, 0)}${createOptionHTML(qId, ++optCounter, 1)}${createOptionHTML(qId, ++optCounter, 2)}
                     </div>
-                    <button type="button" class="add-opt-btn capture-hide mt-1 pl-8 text-xs text-blue-700 font-bold tp-font">+ 선택지 추가</button>
+                    <button type="button" class="add-opt-btn capture-hide mt-1 pl-4 text-xs text-blue-600 font-bold tp-font hover:underline">+ 선택지 추가</button>
                 </div>`;
             }
 
             questionsListEl.addEventListener('click', (e) => {
-                if (e.target.closest('.remove-q-btn')) { e.target.closest('.question-item').remove(); updateNums(); }
+                if (e.target.closest('.remove-q-btn')) { e.target.closest('[data-q-id]').remove(); updateNums(); }
                 if (e.target.closest('.add-opt-btn')) {
-                    const q = e.target.closest('.question-item');
-                    q.querySelector('.options-container').insertAdjacentHTML('beforeend', createOptionHTML(q.dataset.qId, ++optCounter, q.querySelectorAll('.option-item').length));
+                    const qItem = e.target.closest('[data-q-id]');
+                    qItem.querySelector('.options-container').insertAdjacentHTML('beforeend', createOptionHTML(qItem.dataset.qId, ++optCounter, qItem.querySelectorAll('.option-item').length));
                 }
                 if (e.target.closest('.remove-opt-btn')) {
-                    const q = e.target.closest('.question-item'); e.target.closest('.option-item').remove(); updateOptNums(q);
+                    const qItem = e.target.closest('[data-q-id]'); e.target.closest('.option-item').remove(); updateOptNums(qItem);
                 }
             });
 
             document.addEventListener('input', (e) => {
                 if (e.target.classList.contains('auto-expand')) {
                     e.target.style.height = 'auto'; 
-                    e.target.style.height = (e.target.scrollHeight) + 'px';
+                    e.target.style.height = e.target.scrollHeight + 'px';
                 }
             });
 
             function updateNums() {
-                document.querySelectorAll('.question-item').forEach((q, idx) => {
+                document.querySelectorAll('[data-q-id]').forEach((q, idx) => {
                     q.querySelector('.tp-font span').textContent = `${idx + 1}.`;
                 });
             }
@@ -347,28 +351,29 @@
                 });
             }
 
-            addQBtn.onclick = () => {
-                questionsListEl.insertAdjacentHTML('beforeend', createQuestionHTML(++qCounter, document.querySelectorAll('.question-item').length + 1));
+            document.getElementById('add-q-btn').onclick = () => {
+                questionsListEl.insertAdjacentHTML('beforeend', createQuestionHTML(++qCounter, document.querySelectorAll('[data-q-id]').length + 1));
             };
 
+            // 기본 문제 3개 생성으로 변경
             questionsListEl.insertAdjacentHTML('beforeend', createQuestionHTML(++qCounter, 1));
             questionsListEl.insertAdjacentHTML('beforeend', createQuestionHTML(++qCounter, 2));
+            questionsListEl.insertAdjacentHTML('beforeend', createQuestionHTML(++qCounter, 3));
 
-            // 이미지 저장(캡처) 로직 최적화
             captureBtn.onclick = async () => {
                 document.body.classList.add('capturing');
-                captureArea.classList.add('is-capturing'); // CSS 제어용 클래스 추가
+                captureArea.classList.add('is-capturing');
                 captureBtn.textContent = '이미지 생성 중...';
                 
-                // 모든 입력값 동기화
                 document.querySelectorAll('.capture-input-wrapper').forEach(w => {
                     const real = w.querySelector('.real-input');
                     const fake = w.querySelector('.fake-input');
                     fake.textContent = real.value || '\u00A0';
+                    fake.style.fontFamily = window.getComputedStyle(real).fontFamily;
                 });
 
                 window.scrollTo(0, 0);
-                await new Promise(r => setTimeout(r, 600)); // 렌더링 대기 시간을 넉넉히 줌
+                await new Promise(r => setTimeout(r, 600));
 
                 try {
                     const canvas = await html2canvas(captureArea, { 
@@ -379,10 +384,10 @@
                     });
                     const link = document.createElement("a");
                     link.href = canvas.toDataURL("image/png");
-                    link.download = `BoastInGod_${new Date().getTime()}.png`;
+                    link.download = `GodQuiz_${new Date().getTime()}.png`;
                     link.click();
                 } catch (err) { 
-                    showToast("이미지 저장 실패", true); 
+                    showToast("이미지 저장 실패!"); 
                 } finally {
                     document.body.classList.remove('capturing');
                     captureArea.classList.remove('is-capturing');
@@ -393,3 +398,4 @@
     </script>
 </body>
 </html>
+
