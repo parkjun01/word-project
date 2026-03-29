@@ -46,7 +46,7 @@
             width: 100%;
         }
 
-        /* 캡처 시 중복 및 잘림 방지 */
+        /* 캡처 시 중복 방지 */
         .fake-input { 
             display: none; 
             word-break: break-all; 
@@ -56,7 +56,7 @@
         .is-capturing .real-input { display: none !important; }
         .is-capturing .fake-input { display: flex !important; }
 
-        /* 문제 박스 디자인 (가시성 및 선명도 강화) */
+        /* 문제 박스 디자인 */
         .question-text-box {
             background-color: rgba(255, 255, 255, 0.95);
             border-radius: 12px;
@@ -82,7 +82,7 @@
 
         .v-center-row { display: flex; align-items: center; }
 
-        /* 갤러리 디자인 */
+        /* 갤러리 스크롤바 */
         .custom-scrollbar::-webkit-scrollbar { height: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
@@ -90,19 +90,20 @@
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col items-center p-4 py-8 tp-font relative">
 
-    <div id="toast" class="fixed top-4 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-6 py-3 rounded-full shadow-lg transition-opacity duration-300 opacity-0 pointer-events-none z-50 font-bold text-sm">
-        알림 메시지
+    <!-- 토스트 알림 -->
+    <div id="toast" class="fixed top-4 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-6 py-3 rounded-full shadow-lg transition-opacity duration-300 opacity-0 pointer-events-none z-50 font-bold text-sm text-center min-w-[200px]">
+        메시지
     </div>
 
-    <!-- 설정 패널 -->
+    <!-- 설정 패널 (배경 갤러리 전용) -->
     <div class="w-full max-w-lg mb-4 bg-white p-4 rounded-xl shadow-md border border-gray-200">
         <div class="flex justify-between items-center mb-1 text-sm">
-            <span class="font-bold text-gray-800">🖼️ 배경 갤러리</span>
+            <span class="font-bold text-gray-800">🖼️ 내 배경 갤러리</span>
             <span id="save-status" class="text-blue-600 font-bold">상태: 준비 완료</span>
         </div>
         <div id="image-gallery" class="flex gap-3 overflow-x-auto pb-2 pt-1 items-center min-h-[5rem] custom-scrollbar"></div>
         <label class="cursor-pointer mt-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg text-sm font-bold transition-colors text-center block w-full shadow-sm">
-            + 새 배경 추가
+            + 새 배경 이미지 추가
             <input type="file" id="bg-upload" class="hidden" accept="image/*">
         </label>
     </div>
@@ -110,13 +111,13 @@
     <!-- 캡처될 영역 -->
     <div id="capture-area" class="relative w-full max-w-lg shadow-2xl rounded-xl overflow-hidden bg-white min-h-[850px] flex flex-col border border-gray-100">
         
-        <!-- 배경 -->
+        <!-- 배경 레이어 -->
         <div id="main-bg-wrap" class="absolute inset-0 pointer-events-none z-0 opacity-40">
             <img id="main-bg-img" src="Gemini_Generated_Image_sed1dused1dused1.png.jpg" alt="Background" class="w-full h-full object-cover object-center select-none" onerror="this.src='https://images.unsplash.com/photo-1499209974431-9dac3adaf471?auto=format&fit=crop&w=1200&q=80'">
         </div>
 
         <div class="relative z-10 p-6 md:p-8 flex flex-col flex-grow">
-            <!-- 고정 타이틀 -->
+            <!-- 고정 상단 타이틀 -->
             <div class="text-left font-title mb-8">
                 <h2 class="text-2xl md:text-3xl font-bold text-gray-700 italic">Boast not tomorrow</h2>
                 <h1 class="text-4xl md:text-5xl font-black text-blue-600 mt-2 tracking-wide">Boast in God</h1>
@@ -142,16 +143,11 @@
                 </div>
             </div>
 
-            <!-- 문제 리스트 영역 -->
+            <!-- 문제 리스트 영역 (고정된 3문제만 표시) -->
             <div class="flex-grow flex flex-col">
                 <h3 class="text-xl font-bold text-gray-800 mb-4 tp-font">오늘의 퀴즈</h3>
-                <div id="questions-list"></div>
-                
-                <!-- 추가 버튼 -->
-                <div class="flex gap-2 mt-4 mb-8 capture-hide">
-                    <button id="add-q-sub-btn" class="flex-1 py-3 border-2 border-dashed border-gray-400 text-gray-600 rounded-xl hover:bg-white transition-colors font-bold text-xs">+ 주관식 추가</button>
-                    <button id="add-q-obj-btn" class="flex-1 py-3 border-2 border-dashed border-gray-400 text-gray-600 rounded-xl hover:bg-white transition-colors font-bold text-xs">+ 객관식 추가</button>
-                </div>
+                <div id="questions-list" class="space-y-8"></div>
+                <!-- 여기에 있던 '문제 추가' 버튼이 제거되었습니다 -->
             </div>
         </div>
     </div>
@@ -206,7 +202,8 @@
                             else { w = Math.round((w * maxSize) / h); h = maxSize; }
                         }
                         canvas.width = w; canvas.height = h;
-                        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, w, h);
                         resolve(canvas.toDataURL('image/jpeg', 0.85)); 
                     };
                 });
@@ -240,6 +237,7 @@
                     if (localGallery.length > 8) localGallery.pop(); 
                     localStorage.setItem('my_gallery', JSON.stringify(localGallery));
                     renderGallery();
+                    showToast("배경이 추가되었습니다.");
                 };
                 reader.readAsDataURL(file);
             });
@@ -280,7 +278,6 @@
                     <div class="flex-grow relative capture-input-wrapper v-center-row">
                         <input type="text" placeholder="선택지 입력" class="real-input w-full border-b border-gray-200 focus:border-blue-400 outline-none text-base text-gray-800 px-1">
                         <div class="fake-input text-base text-gray-800 px-1 border-b border-transparent"></div>
-                        <button type="button" class="remove-opt-btn capture-hide absolute -right-6 text-gray-400 hover:text-red-500 font-bold opacity-0 group-hover/opt:opacity-100">✕</button>
                     </div>
                 </div>`;
             }
@@ -289,7 +286,7 @@
                 const contentId = `q-content-${qId}`;
                 const isSub = type === 'subjective';
                 return `
-                <div class="mb-6 relative group question-item-wrap" data-q-id="${qId}" data-type="${type}">
+                <div class="relative group question-item-wrap" data-q-id="${qId}" data-type="${type}">
                     <div class="flex justify-end mb-1">
                         <div class="font-toolbar capture-hide">
                             <button class="font-choice-btn active" onclick="setItemFont('${contentId}', 'f-noto', this)">고딕</button>
@@ -306,7 +303,6 @@
                         <div id="${contentId}" class="flex-grow relative f-noto capture-input-wrapper v-center-row">
                             <textarea rows="1" placeholder="문제를 입력하세요" class="real-input auto-expand w-full focus:outline-none text-lg font-bold text-gray-800"></textarea>
                             <div class="fake-input text-lg font-bold text-gray-800"></div>
-                            <button type="button" class="remove-q-btn capture-hide absolute -right-12 text-red-500 font-bold opacity-0 group-hover:opacity-100">삭제</button>
                         </div>
                     </div>
                     ${!isSub ? `
@@ -314,22 +310,10 @@
                             <div class="options-container">
                                 ${createOptionHTML(qId, ++optCounter, 0)}${createOptionHTML(qId, ++optCounter, 1)}${createOptionHTML(qId, ++optCounter, 2)}
                             </div>
-                            <button type="button" class="add-opt-btn capture-hide mt-1 text-xs text-blue-600 font-bold tp-font hover:underline">+ 선택지 추가</button>
                         </div>
                     ` : ''}
                 </div>`;
             }
-
-            questionsListEl.addEventListener('click', (e) => {
-                if (e.target.closest('.remove-q-btn')) { e.target.closest('.question-item-wrap').remove(); updateNums(); }
-                if (e.target.closest('.add-opt-btn')) {
-                    const q = e.target.closest('.question-item-wrap');
-                    q.querySelector('.options-container').insertAdjacentHTML('beforeend', createOptionHTML(q.dataset.qId, ++optCounter, q.querySelectorAll('.option-item').length));
-                }
-                if (e.target.closest('.remove-opt-btn')) {
-                    const q = e.target.closest('.question-item-wrap'); e.target.closest('.option-item').remove(); updateOptNums(q);
-                }
-            });
 
             document.addEventListener('input', (e) => {
                 if (e.target.classList.contains('auto-expand')) {
@@ -337,60 +321,67 @@
                 }
             });
 
-            function updateNums() {
-                document.querySelectorAll('.question-item-wrap').forEach((q, idx) => {
-                    q.querySelector('.q-num-label').textContent = `${idx + 1}.`;
-                });
-            }
-            function updateOptNums(q) {
-                q.querySelectorAll('.option-item span').forEach((s, idx) => s.textContent = getCircleNumber(idx));
-            }
-
-            document.getElementById('add-q-sub-btn').onclick = () => questionsListEl.insertAdjacentHTML('beforeend', createQuestionHTML(++qCounter, document.querySelectorAll('.question-item-wrap').length + 1, 'subjective'));
-            document.getElementById('add-q-obj-btn').onclick = () => questionsListEl.insertAdjacentHTML('beforeend', createQuestionHTML(++qCounter, document.querySelectorAll('.question-item-wrap').length + 1, 'objective'));
-
-            // [초기 설정] 1, 2번 주관식 / 3번 객관식
+            // [초기 설정] 요청하신 대로 1, 2번 주관식 / 3번 객관식 생성 (추가 버튼은 제거됨)
             questionsListEl.insertAdjacentHTML('beforeend', createQuestionHTML(++qCounter, 1, 'subjective'));
             questionsListEl.insertAdjacentHTML('beforeend', createQuestionHTML(++qCounter, 2, 'subjective'));
             questionsListEl.insertAdjacentHTML('beforeend', createQuestionHTML(++qCounter, 3, 'objective'));
 
-            // 이미지 저장 (강력한 Blob 방식)
+            // 이미지 저장 로직 (가장 안정적인 Blob + URL 방식)
             captureBtn.onclick = async () => {
                 if (captureBtn.disabled) return;
+                
                 captureBtn.disabled = true;
-                captureBtn.textContent = '저장 중...';
+                captureBtn.textContent = '이미지 저장 준비 중...';
                 document.body.classList.add('capturing');
                 captureArea.classList.add('is-capturing');
                 
+                // 캡처 전 페이지 상단으로 스크롤 고정
                 window.scrollTo(0, 0);
 
+                // 입력값 텍스트 레이어로 전이
                 document.querySelectorAll('.capture-input-wrapper').forEach(w => {
                     const real = w.querySelector('.real-input'), fake = w.querySelector('.fake-input');
-                    fake.textContent = real.value || '\u00A0';
-                    fake.style.fontFamily = window.getComputedStyle(real).fontFamily;
+                    if (real && fake) {
+                        fake.textContent = real.value || '\u00A0';
+                        fake.style.fontFamily = window.getComputedStyle(real).fontFamily;
+                    }
                 });
 
+                // 렌더링 동기화 대기
                 await new Promise(r => setTimeout(r, 600));
 
                 try {
                     const canvas = await html2canvas(captureArea, { 
-                        useCORS: true, scale: 2, backgroundColor: '#ffffff', logging: false
+                        useCORS: true, 
+                        scale: 2, 
+                        backgroundColor: '#ffffff', 
+                        logging: false 
                     });
                     
+                    // Blob 방식으로 변환하여 다운로드 실행
                     canvas.toBlob((blob) => {
+                        if (!blob) {
+                            showToast("이미지 생성을 실패했습니다.");
+                            return;
+                        }
                         const url = URL.createObjectURL(blob);
                         const link = document.createElement("a");
                         link.href = url;
-                        link.download = `God_Quiz_${new Date().toISOString().slice(0,10)}.png`;
+                        link.download = `Boast_Quiz_${new Date().getTime()}.png`;
+                        
+                        // 모바일 및 다양한 환경 대응을 위한 클릭 시뮬레이션
                         document.body.appendChild(link);
                         link.click();
                         document.body.removeChild(link);
-                        URL.revokeObjectURL(url);
-                        showToast("성공적으로 저장되었습니다.");
+                        
+                        // URL 메모리 해제
+                        setTimeout(() => URL.revokeObjectURL(url), 100);
+                        showToast("이미지가 기기에 저장되었습니다.");
                     }, "image/png");
 
                 } catch (err) { 
-                    showToast("오류가 발생했습니다."); 
+                    console.error("Capture Error:", err);
+                    showToast("이미지 저장 중 오류가 발생했습니다."); 
                 } finally {
                     document.body.classList.remove('capturing');
                     captureArea.classList.remove('is-capturing');
