@@ -13,7 +13,10 @@
     
     <script src="https://unpkg.com/lucide@latest"></script>
     
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- ExcelJS & FileSaver (엑셀에 색상, 정렬 등 서식을 적용하기 위해 라이브러리 교체) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
@@ -72,7 +75,8 @@
                 </tr>
             </thead>
             <tbody id="table-body">
-                </tbody>
+                <!-- JavaScript를 통해 자동으로 30행이 생성됩니다 -->
+            </tbody>
         </table>
     </div>
 
@@ -96,42 +100,78 @@
             tbody.appendChild(tr);
         }
 
-        // 3. 엑셀 다운로드 핸들러
-        function handleDownloadExcel() {
-            if (typeof XLSX === 'undefined') {
+        // 3. 엑셀 다운로드 핸들러 (ExcelJS 적용하여 서식 유지)
+        async function handleDownloadExcel() {
+            if (typeof ExcelJS === 'undefined' || typeof saveAs === 'undefined') {
                 alert("엑셀 변환 기능을 불러오는 중입니다. 잠시 후 다시 시도해주세요.");
                 return;
             }
 
-            const wb = XLSX.utils.book_new();
-            
-            const wsData = [
-                ["아동복지학과 충전기 대여 관리 대장", "", "", "", "", ""],
-                ["순번", "대여일", "학번", "이름", "개수", "반납 후 서명"]
+            const workbook = new ExcelJS.Workbook();
+            const worksheet = workbook.addWorksheet('대여대장');
+
+            // 1. 열 너비 설정
+            worksheet.columns = [
+                { width: 8 },   // 순번
+                { width: 14 },  // 대여일
+                { width: 18 },  // 학번
+                { width: 14 },  // 이름
+                { width: 8 },   // 개수
+                { width: 40 }   // 반납 후 서명 (넓게)
             ];
 
+            // 모든 셀의 공통 테두리 스타일
+            const borderStyle = {
+                top: { style: 'thin' },
+                left: { style: 'thin' },
+                bottom: { style: 'thin' },
+                right: { style: 'thin' }
+            };
+
+            // 2. 제목 행 추가 및 서식 지정 (초록 배경, 흰색 글자)
+            const titleRow = worksheet.addRow(['아동복지학과 충전기 대여 관리 대장']);
+            worksheet.mergeCells('A1:F1');
+            titleRow.height = 60; // 제목 칸 높이
+
+            const titleCell = worksheet.getCell('A1');
+            titleCell.fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: { argb: 'FF2F855A' } // Tailwind bg-green-800 (#2F855A) 색상
+            };
+            titleCell.font = {
+                name: 'Jua', // PC에 Jua 폰트가 없으면 맑은고딕 등으로 대체됨
+                family: 4,
+                size: 22,
+                color: { argb: 'FFFFFFFF' }, // 흰색 텍스트
+            };
+            titleCell.alignment = { vertical: 'middle', horizontal: 'center' };
+            titleCell.border = borderStyle;
+
+            // 3. 헤더 행 추가
+            const headerRow = worksheet.addRow(['순번', '대여일', '학번', '이름', '개수', '반납 후 서명']);
+            headerRow.height = 30;
+            headerRow.eachCell((cell) => {
+                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } };
+                cell.font = { name: 'Jua', size: 12 };
+                cell.alignment = { vertical: 'middle', horizontal: 'center' };
+                cell.border = borderStyle;
+            });
+
+            // 4. 데이터(빈칸) 30줄 생성
             for (let i = 1; i <= 30; i++) {
-                wsData.push([i, "", "", "", "", ""]);
+                const row = worksheet.addRow([i, '', '', '', '', '']);
+                row.height = 25;
+                row.eachCell((cell) => {
+                    cell.font = { name: 'Jua', size: 11 };
+                    cell.alignment = { vertical: 'middle', horizontal: 'center' };
+                    cell.border = borderStyle;
+                });
             }
 
-            const ws = XLSX.utils.aoa_to_sheet(wsData);
-
-            ws["!merges"] = [
-                { s: { r: 0, c: 0 }, e: { r: 0, c: 5 } }
-            ];
-
-            // 엑셀 열 너비도 화면 비율에 맞게 조정
-            ws["!cols"] = [
-                { wch: 5 },   // 순번
-                { wch: 12 },  // 대여일
-                { wch: 16 },  // 학번
-                { wch: 12 },  // 이름
-                { wch: 5 },   // 개수
-                { wch: 35 }   // 반납 후 서명 (가장 넓게)
-            ];
-
-            XLSX.utils.book_append_sheet(wb, ws, "대여대장");
-            XLSX.writeFile(wb, "아동복지학과_충전기대여관리대장.xlsx");
+            // 5. 엑셀 파일 생성 및 다운로드 (FileSaver.js 사용)
+            const buffer = await workbook.xlsx.writeBuffer();
+            saveAs(new Blob([buffer]), '아동복지학과_충전기대여관리대장.xlsx');
         }
 
         // 4. 이미지 다운로드 핸들러 (async 추가)
