@@ -29,9 +29,9 @@
         .f-gamja { font-family: 'Gamja Flower', cursive !important; }
         .f-black { font-family: 'Black Han Sans', sans-serif !important; }
 
-        /* 입력 스타일 공통 */
+        /* 입력 스타일 공통: 줄높이를 타이트하게 조정 */
         .real-input, .fake-input { 
-            line-height: 1.4; 
+            line-height: 1.2; 
             padding: 0 !important;
             margin: 0 !important;
             background: transparent;
@@ -40,53 +40,50 @@
             outline: none;
         }
         
-        /* 캡처용 텍스트 스타일: 높이 팽창을 막기 위해 min-height를 부모와 동일하게 조절 */
+        /* 캡처용 텍스트 레이아웃 */
         .fake-input { 
             display: none; 
             word-break: break-all; 
             white-space: pre-wrap; 
             align-items: center;
             text-align: left;
-            width: 100%;
         }
         
-        /* 캡처 모드: 입력창은 아예 제거하고 텍스트 레이어로 대체 */
+        /* 캡처 모드 변환 */
         .is-capturing .real-input { display: none !important; }
         .is-capturing .fake-input { display: flex !important; }
 
         textarea.auto-expand {
-            min-height: 1.4em;
+            min-height: 1.2em;
             overflow: hidden;
             resize: none;
             display: block;
         }
 
-        /* [수정] 문제 박스 디자인: 아무것도 없을 때도 일정한 크기 유지 */
+        /* [수정] 문제 박스 디자인: 고정 높이 제거 및 패딩 최소화 */
         .question-text-box {
             background-color: rgba(255, 255, 255, 0.95);
             border-radius: 12px;
-            padding: 0 16px; /* 좌우 여백만 설정 */
+            padding: 8px 16px; /* 상하 여백을 12px에서 8px로 축소 */
             border: 2px solid rgba(59, 130, 246, 0.4); 
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
             width: 100%;
             display: flex;
-            align-items: center; /* 세로 가운데 정렬 */
-            min-height: 56px; /* 고정된 최소 높이 (중요) */
+            align-items: center;
+            min-height: 0; /* 강제 높이 제거 */
             height: auto;
-            overflow: hidden;
         }
 
-        /* 캡처 시 박스 크기 및 스타일 강제 고정 */
+        /* 캡처 시 스타일 강제 고정 (디자인 유지) */
         .is-capturing .question-text-box {
             background-color: #ffffff !important;
             border: 2px solid #3b82f6 !important;
             box-shadow: none !important;
-            padding: 0 16px !important;
-            min-height: 56px !important;
+            padding: 8px 16px !important;
+            min-height: 0 !important;
             height: auto !important;
         }
 
-        /* 폰트 툴바 스타일 */
         .font-toolbar { display: flex; gap: 4px; margin-bottom: 4px; }
         .font-choice-btn {
             background: #f8fafc;
@@ -101,7 +98,6 @@
 
         .v-center-row { display: flex; align-items: center; }
 
-        /* 갤러리 가로 스크롤 */
         .custom-scrollbar::-webkit-scrollbar { height: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
@@ -113,7 +109,7 @@
         메시지
     </div>
 
-    <!-- 설정 패널 -->
+    <!-- 배경 갤러리 패널 -->
     <div class="w-full max-w-lg mb-4 bg-white p-4 rounded-xl shadow-md border border-gray-200">
         <div class="flex justify-between items-center mb-1 text-sm">
             <span class="font-bold text-gray-800">🖼️ 내 배경 갤러리</span>
@@ -129,19 +125,16 @@
     <!-- 캡처 영역 -->
     <div id="capture-area" class="relative w-full max-w-lg shadow-2xl rounded-xl overflow-hidden bg-white min-h-[850px] flex flex-col border border-gray-100">
         
-        <!-- 배경 -->
         <div id="main-bg-wrap" class="absolute inset-0 pointer-events-none z-0 opacity-40">
             <img id="main-bg-img" src="Gemini_Generated_Image_sed1dused1dused1.png.jpg" alt="Background" class="w-full h-full object-cover object-center select-none" onerror="this.src='https://images.unsplash.com/photo-1499209974431-9dac3adaf471?auto=format&fit=crop&w=1200&q=80'">
         </div>
 
         <div class="relative z-10 p-6 md:p-8 flex flex-col flex-grow">
-            <!-- 고정 타이틀 -->
             <div class="text-left font-title mb-8">
                 <h2 class="text-2xl md:text-3xl font-bold text-gray-700 italic">Boast not tomorrow</h2>
                 <h1 class="text-4xl md:text-5xl font-black text-blue-600 mt-2 tracking-tight">Boast in God</h1>
             </div>
 
-            <!-- 주제 영역 -->
             <div id="topic-container" class="mb-10">
                 <div class="flex justify-end mb-1">
                     <div class="font-toolbar capture-hide">
@@ -161,15 +154,13 @@
                 </div>
             </div>
 
-            <!-- 퀴즈 리스트 영역 (고정 3문제) -->
             <div class="flex-grow flex flex-col">
                 <h3 class="text-lg font-bold text-gray-800 mb-4 tp-font">오늘의 퀴즈</h3>
-                <div id="questions-list" class="space-y-6"></div>
+                <div id="questions-list" class="space-y-4"></div>
             </div>
         </div>
     </div>
 
-    <!-- 이미지 저장 버튼 -->
     <button id="capture-btn" class="mt-8 mb-12 px-10 py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-full shadow-lg transition-all transform hover:scale-105 active:scale-95">
         이미지로 저장하기
     </button>
@@ -219,7 +210,7 @@
                             else { w = Math.round((w * maxSize) / h); h = maxSize; }
                         }
                         canvas.width = w; canvas.height = h;
-                        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                        ctx = canvas.getContext('2d').drawImage(img, 0, 0, w, h);
                         resolve(canvas.toDataURL('image/jpeg', 0.85)); 
                     };
                 });
@@ -311,7 +302,7 @@
                         <div class="mr-3 min-w-[28px] flex items-center justify-center font-bold text-blue-700 tp-font text-xl shrink-0">
                             <span class="q-num-label">${qIndex}.</span>
                         </div>
-                        <div id="${contentId}" class="flex-grow relative f-noto capture-input-wrapper overflow-hidden flex items-center">
+                        <div id="${contentId}" class="flex-grow relative f-noto capture-input-wrapper flex items-center overflow-hidden">
                             <textarea rows="1" class="real-input auto-expand w-full focus:outline-none text-lg font-bold text-gray-900"></textarea>
                             <div class="fake-input text-lg font-bold text-gray-900"></div>
                         </div>
@@ -332,15 +323,14 @@
                 }
             });
 
-            // 초기 로드
             const questionsListEl = document.getElementById('questions-list');
             questionsListEl.insertAdjacentHTML('beforeend', createQuestionHTML(1, 1, 'subjective'));
             questionsListEl.insertAdjacentHTML('beforeend', createQuestionHTML(2, 2, 'subjective'));
             questionsListEl.insertAdjacentHTML('beforeend', createQuestionHTML(3, 3, 'objective'));
 
-            // 이미지 저장 로직
             captureBtn.onclick = async () => {
                 if (captureBtn.disabled) return;
+                
                 captureBtn.disabled = true;
                 captureBtn.textContent = '저장 준비 중...';
                 document.body.classList.add('capturing');
@@ -350,14 +340,12 @@
                 document.querySelectorAll('.capture-input-wrapper').forEach(w => {
                     const real = w.querySelector('.real-input'), fake = w.querySelector('.fake-input');
                     if (real && fake) {
-                        // 내용이 없으면 공백문자를 넣어 높이 유지
                         fake.textContent = real.value || '\u00A0';
                         const style = window.getComputedStyle(real);
                         fake.style.fontFamily = style.fontFamily;
                         fake.style.fontWeight = style.fontWeight;
                         fake.style.fontSize = style.fontSize;
                         fake.style.color = style.color;
-                        // 캡처 시 높이를 강제로 'auto'로 두어 부모의 min-height를 따르게 함
                         fake.style.height = 'auto'; 
                     }
                 });
@@ -370,7 +358,6 @@
                         scale: 2.5, 
                         backgroundColor: '#ffffff', 
                         logging: false,
-                        // 캡처 영역을 정확히 지정
                         width: captureArea.offsetWidth, 
                         height: captureArea.offsetHeight
                     });
