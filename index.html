@@ -58,7 +58,7 @@
                 <!-- 제목 행 -->
                 <tr>
                     <th 
-                        colspan="6" 
+                        colspan="7" 
                         class="py-10 border border-black text-[36px] tracking-widest text-white font-normal"
                         style="background-color: #2F855A;"
                     >
@@ -67,12 +67,13 @@
                 </tr>
                 <!-- 열 헤더 -->
                 <tr class="bg-white text-base">
-                    <th class="border border-black py-2.5 w-[8%] font-normal">순번</th>
-                    <th class="border border-black py-2.5 w-[16%] font-normal">대여일</th>
-                    <th class="border border-black py-2.5 w-[20%] font-normal">학번</th>
-                    <th class="border border-black py-2.5 w-[16%] font-normal">이름</th>
-                    <th class="border border-black py-2.5 w-[10%] font-normal">개수</th>
-                    <th class="border border-black py-2.5 w-[30%] font-normal">반납 후 서명</th>
+                    <th class="border border-black py-4 w-[7%] font-normal">순번</th>
+                    <th class="border border-black py-4 w-[15%] font-normal">대여일</th>
+                    <th class="border border-black py-4 w-[18%] font-normal">학번</th>
+                    <th class="border border-black py-4 w-[15%] font-normal">이름</th>
+                    <th class="border border-black py-4 w-[8%] font-normal">개수</th>
+                    <th class="border border-black py-4 w-[27%] font-normal">반납 후 서명</th>
+                    <th class="border border-black py-4 w-[10%] font-normal"></th>
                 </tr>
             </thead>
             <tbody id="table-body">
@@ -89,9 +90,10 @@
         const tbody = document.getElementById('table-body');
         for (let i = 1; i <= 30; i++) {
             const tr = document.createElement('tr');
-            tr.className = "h-[26px]"; // 행 높이 지정
+            tr.className = "h-[34px]"; // 행 높이 지정 (기존 26px에서 34px로 늘림)
             tr.innerHTML = `
                 <td class="border border-black font-medium">${i}</td>
+                <td class="border border-black"></td>
                 <td class="border border-black"></td>
                 <td class="border border-black"></td>
                 <td class="border border-black"></td>
@@ -113,20 +115,20 @@
             
             // 엑셀 데이터 구성
             const wsData = [
-                ["아동복지학과 충전기 대여 관리 대장", "", "", "", "", ""],
-                ["순번", "대여일", "학번", "이름", "개수", "반납 후 서명"]
+                ["아동복지학과 충전기 대여 관리 대장", "", "", "", "", "", ""],
+                ["순번", "대여일", "학번", "이름", "개수", "반납 후 서명", ""]
             ];
 
             // 엑셀 파일에도 1번부터 30번까지 빈 행 생성
             for (let i = 1; i <= 30; i++) {
-                wsData.push([i, "", "", "", "", ""]);
+                wsData.push([i, "", "", "", "", "", ""]);
             }
 
             const ws = XLSX.utils.aoa_to_sheet(wsData);
 
             // 첫 번째 행 셀 병합 (제목 부분)
             ws["!merges"] = [
-                { s: { r: 0, c: 0 }, e: { r: 0, c: 5 } }
+                { s: { r: 0, c: 0 }, e: { r: 0, c: 6 } }
             ];
 
             // 열 너비 설정
@@ -136,16 +138,17 @@
                 { wch: 18 }, // 학번
                 { wch: 14 }, // 이름
                 { wch: 8 },  // 개수
-                { wch: 20 }  // 반납 후 서명
+                { wch: 20 }, // 반납 후 서명
+                { wch: 8 }   // 우측 빈 칸
             ];
 
             // 행 높이 설정
             ws["!rows"] = [
                 { hpx: 80 }, // 제목 행 높이 늘림
-                { hpx: 30 }  // 헤더 행 높이
+                { hpx: 45 }  // 헤더 행 높이 늘림 (순번, 대여일 등)
             ];
             for (let i = 2; i <= 31; i++) {
-                ws["!rows"].push({ hpx: 25 }); // 데이터 행 높이
+                ws["!rows"].push({ hpx: 32 }); // 데이터 행 높이 늘림
             }
 
             // 스타일 적용 (xlsx-js-style 전용)
@@ -208,6 +211,8 @@
     </script>
 </body>
 </html>
+
+
 
 
 
