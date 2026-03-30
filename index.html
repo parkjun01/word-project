@@ -12,28 +12,25 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     
-    <!-- ExcelJS & FileSaver -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     
-    <!-- A4 1장에 완벽하게 맞추기 위한 엄격한 CSS 설정 -->
     <style>
-        /* 웹 폰트 로드 대기 */
         body { font-family: 'Jua', sans-serif; }
         
+        /* 브라우저 인쇄 여백 강제 축소 */
         @page {
-            size: A4 portrait; /* ISO A4 세로 고정 */
-            margin: 0; /* 브라우저 자체 여백 완전 제거 (문서 컨테이너의 padding으로 대체) */
+            size: A4 portrait;
+            margin: 5mm; 
         }
         
         @media print {
             body { 
-                background-color: white; 
-                margin: 0; 
-                padding: 0;
+                background-color: white !important; 
+                margin: 0 !important; 
+                padding: 0 !important;
             }
             * {
                 -webkit-print-color-adjust: exact !important;
@@ -41,10 +38,15 @@
             }
             #document-container {
                 box-shadow: none !important;
-                margin: 0 !important;
-                /* A4 규격 고정 */
-                width: 210mm !important;
-                height: 297mm !important;
+                margin: 0 auto !important;
+                padding: 5mm !important; /* 인쇄 시 패딩 축소 */
+                width: 200mm !important;
+                height: 285mm !important; /* A4(297mm)보다 약간 작게 설정하여 2장 밀림 완벽 차단 */
+                page-break-after: avoid !important;
+                page-break-inside: avoid !important;
+            }
+            table {
+                height: 100% !important; /* 남은 공간을 표가 자동으로 꽉 채움 */
             }
         }
     </style>
@@ -52,67 +54,42 @@
 <body class="min-h-screen bg-gray-200 py-8 px-4 flex flex-col items-center">
     
     <div class="mb-6 flex gap-3 print:hidden">
-        <button
-            class="flex items-center gap-2 px-4 py-2 rounded-lg text-white font-semibold shadow-md transition-colors bg-green-600 hover:bg-green-700"
-            onclick="handleDownloadExcel()"
-        >
-            <i data-lucide="download" class="w-5 h-5"></i>
-            엑셀 다운로드
+        <button class="flex items-center gap-2 px-4 py-2 rounded-lg text-white font-semibold shadow-md transition-colors bg-green-600 hover:bg-green-700" onclick="handleDownloadExcel()">
+            <i data-lucide="download" class="w-5 h-5"></i> 엑셀 다운로드
         </button>
-        <button
-            class="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg shadow-md transition-colors"
-            onclick="handleDownloadImage()"
-        >
-            <i data-lucide="image" class="w-5 h-5"></i>
-            이미지 저장
+        <button class="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg shadow-md transition-colors" onclick="handleDownloadImage()">
+            <i data-lucide="image" class="w-5 h-5"></i> 이미지 저장
         </button>
-        <button
-            class="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md transition-colors"
-            onclick="window.print()"
-        >
-            <i data-lucide="printer" class="w-5 h-5"></i>
-            문서 인쇄
+        <button class="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md transition-colors" onclick="window.print()">
+            <i data-lucide="printer" class="w-5 h-5"></i> 문서 인쇄
         </button>
-        <button
-            class="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg shadow-md transition-colors"
-            onclick="handleDownloadPDF()"
-        >
-            <i data-lucide="file-down" class="w-5 h-5"></i>
-            PDF 저장
+        <button class="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg shadow-md transition-colors" onclick="handleDownloadPDF()">
+            <i data-lucide="file-down" class="w-5 h-5"></i> PDF 저장
         </button>
     </div>
 
-    <!-- 
-      ISO A4 실제 크기: 210mm x 297mm
-      위아래 여백을 12mm씩 부여 => 실제 표가 들어갈 공간은 높이 273mm
-    -->
     <div id="document-container" class="bg-white shadow-xl mx-auto flex flex-col box-border" 
-         style="width: 210mm; height: 297mm; padding: 12mm;">
+         style="width: 21cm; height: 28.5cm; padding: 1cm;">
         
-        <!-- 높이 273mm(297-24)를 각 칸별로 오차없이 배분하여 쏠림 및 잘림 차단 -->
-        <table class="w-full border-collapse text-center text-[13.5px] table-fixed" style="border: 1.5px solid #000; height: 273mm;">
+        <table class="w-full border-collapse text-center text-[13.5px] table-fixed" style="border: 1.5px solid #000; height: 100%;">
             <thead>
                 <tr>
-                    <th 
-                        colspan="6" 
-                        class="border border-black text-[28px] tracking-widest text-white font-normal"
-                        style="background-color: #2F855A; height: 23mm; line-height: 23mm;"
-                    >
+                    <th colspan="6" class="border border-black text-[28px] tracking-widest text-white font-normal"
+                        style="background-color: #2F855A; height: 8%;">
                         아동복지학과 충전기 대여 관리 대장
                     </th>
                 </tr>
-                <tr class="bg-white">
-                    <th class="border border-black font-normal text-center" style="width: 6%; height: 10mm; line-height: 10mm;">순번</th>
-                    <th class="border border-black font-normal text-center" style="width: 14%; height: 10mm; line-height: 10mm;">대여일</th>
-                    <th class="border border-black font-normal text-center" style="width: 18%; height: 10mm; line-height: 10mm;">학번</th>
-                    <th class="border border-black font-normal text-center" style="width: 14%; height: 10mm; line-height: 10mm;">이름</th>
-                    <th class="border border-black font-normal text-center" style="width: 6%; height: 10mm; line-height: 10mm;">개수</th>
-                    <th class="border border-black font-normal text-center" style="width: 42%; height: 10mm; line-height: 10mm;">반납 후 서명</th>
+                <tr class="bg-white" style="height: 3.5%;">
+                    <th class="border border-black font-normal text-center" style="width: 6%;">순번</th>
+                    <th class="border border-black font-normal text-center" style="width: 14%;">대여일</th>
+                    <th class="border border-black font-normal text-center" style="width: 18%;">학번</th>
+                    <th class="border border-black font-normal text-center" style="width: 14%;">이름</th>
+                    <th class="border border-black font-normal text-center" style="width: 6%;">개수</th>
+                    <th class="border border-black font-normal text-center" style="width: 42%;">반납 후 서명</th>
                 </tr>
             </thead>
             <tbody id="table-body">
-                <!-- JavaScript를 통해 자동으로 생성 -->
-            </tbody>
+                </tbody>
         </table>
     </div>
 
@@ -120,16 +97,16 @@
         lucide.createIcons();
 
         const tbody = document.getElementById('table-body');
-        // 남은 높이 240mm를 30행으로 나누면 정확히 한 행당 8mm
         for (let i = 1; i <= 30; i++) {
             const tr = document.createElement('tr');
+            // 높이 강제 지정을 빼고 브라우저가 자동으로 비율을 맞추게 둠 (2장 밀림 방지)
             tr.innerHTML = `
-                <td class="border border-black font-medium text-center" style="height: 8mm; line-height: 8mm;">${i}</td>
-                <td class="border border-black text-center" style="height: 8mm; line-height: 8mm;"></td>
-                <td class="border border-black text-center" style="height: 8mm; line-height: 8mm;"></td>
-                <td class="border border-black text-center" style="height: 8mm; line-height: 8mm;"></td>
-                <td class="border border-black text-center" style="height: 8mm; line-height: 8mm;"></td>
-                <td class="border border-black text-center" style="height: 8mm; line-height: 8mm;"></td>
+                <td class="border border-black font-medium text-center">${i}</td>
+                <td class="border border-black text-center"></td>
+                <td class="border border-black text-center"></td>
+                <td class="border border-black text-center"></td>
+                <td class="border border-black text-center"></td>
+                <td class="border border-black text-center"></td>
             `;
             tbody.appendChild(tr);
         }
@@ -139,30 +116,18 @@
                 alert("엑셀 변환 기능을 불러오는 중입니다. 잠시 후 다시 시도해주세요.");
                 return;
             }
-
             const workbook = new ExcelJS.Workbook();
             const worksheet = workbook.addWorksheet('대여대장');
-
-            worksheet.columns = [
-                { width: 8 }, { width: 14 }, { width: 18 }, 
-                { width: 14 }, { width: 8 }, { width: 40 }
-            ];
-
-            const borderStyle = {
-                top: { style: 'thin' }, left: { style: 'thin' },
-                bottom: { style: 'thin' }, right: { style: 'thin' }
-            };
-
+            worksheet.columns = [{ width: 8 }, { width: 14 }, { width: 18 }, { width: 14 }, { width: 8 }, { width: 40 }];
+            const borderStyle = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
             const titleRow = worksheet.addRow(['아동복지학과 충전기 대여 관리 대장']);
             worksheet.mergeCells('A1:F1');
             titleRow.height = 60; 
-
             const titleCell = worksheet.getCell('A1');
             titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2F855A' } };
             titleCell.font = { name: 'Jua', family: 4, size: 22, color: { argb: 'FFFFFFFF' } };
             titleCell.alignment = { vertical: 'middle', horizontal: 'center' };
             titleCell.border = borderStyle;
-
             const headerRow = worksheet.addRow(['순번', '대여일', '학번', '이름', '개수', '반납 후 서명']);
             headerRow.height = 30;
             headerRow.eachCell((cell) => {
@@ -171,7 +136,6 @@
                 cell.alignment = { vertical: 'middle', horizontal: 'center' };
                 cell.border = borderStyle;
             });
-
             for (let i = 1; i <= 30; i++) {
                 const row = worksheet.addRow([i, '', '', '', '', '']);
                 row.height = 25;
@@ -181,21 +145,16 @@
                     cell.border = borderStyle;
                 });
             }
-
             const buffer = await workbook.xlsx.writeBuffer();
             saveAs(new Blob([buffer]), '아동복지학과_충전기대여관리대장.xlsx');
         }
 
         async function handleDownloadImage() {
             if (typeof html2canvas === 'undefined') {
-                alert("이미지 변환 기능을 불러오는 중입니다. 잠시 후 다시 시도해주세요.");
-                return;
+                alert("기능을 불러오는 중입니다."); return;
             }
-            
             const container = document.getElementById('document-container');
-            window.scrollTo(0, 0);
-            await document.fonts.ready;
-            
+            window.scrollTo(0, 0); await document.fonts.ready;
             container.classList.remove('shadow-xl');
             html2canvas(container, { scale: 2, useCORS: true, backgroundColor: '#ffffff' }).then(canvas => {
                 container.classList.add('shadow-xl'); 
@@ -203,45 +162,24 @@
                 link.download = '아동복지학과_충전기대여관리대장.png';
                 link.href = canvas.toDataURL('image/png');
                 link.click();
-            }).catch(err => {
-                container.classList.add('shadow-xl');
-                console.error("이미지 저장 중 오류 발생:", err);
-                alert("이미지 저장 중 오류가 발생했습니다.");
             });
         }
 
         async function handleDownloadPDF() {
             if (typeof html2canvas === 'undefined' || typeof window.jspdf === 'undefined') {
-                alert("PDF 변환 기능을 불러오는 중입니다. 잠시 후 다시 시도해주세요.");
-                return;
+                alert("기능을 불러오는 중입니다."); return;
             }
-            
             const container = document.getElementById('document-container');
             const { jsPDF } = window.jspdf;
-            
-            try {
-                window.scrollTo(0, 0);
-                await document.fonts.ready;
-
-                container.classList.remove('shadow-xl');
-                const canvas = await html2canvas(container, { 
-                    scale: 2, 
-                    useCORS: true, 
-                    backgroundColor: '#ffffff' 
-                });
+            window.scrollTo(0, 0); await document.fonts.ready;
+            container.classList.remove('shadow-xl');
+            html2canvas(container, { scale: 2, useCORS: true, backgroundColor: '#ffffff' }).then(canvas => {
                 container.classList.add('shadow-xl'); 
-                
                 const imgData = canvas.toDataURL('image/png');
-                
-                // A4 용지 규격(210mm x 297mm)에 맞게 꽉 채워 저장
                 const pdf = new jsPDF('p', 'mm', 'a4');
                 pdf.addImage(imgData, 'PNG', 0, 0, 210, 297);
                 pdf.save('아동복지학과_충전기대여관리대장.pdf');
-            } catch (err) {
-                container.classList.add('shadow-xl');
-                console.error("PDF 저장 중 오류 발생:", err);
-                alert("PDF 저장 중 오류가 발생했습니다.");
-            }
+            });
         }
     </script>
 </body>
