@@ -56,19 +56,19 @@
                 <tr>
                     <th 
                         colspan="6" 
-                        class="py-10 border border-black text-[30px] tracking-widest text-white font-normal align-middle"
+                        class="h-[110px] border border-black text-[30px] tracking-widest text-white font-normal align-middle leading-none"
                         style="background-color: #2F855A;"
                     >
                         아동복지학과 충전기 대여 관리 대장
                     </th>
                 </tr>
                 <tr class="bg-white text-base">
-                    <th class="border border-black py-2.5 w-[6%] font-normal align-middle text-center">순번</th>
-                    <th class="border border-black py-2.5 w-[14%] font-normal align-middle text-center">대여일</th>
-                    <th class="border border-black py-2.5 w-[18%] font-normal align-middle text-center">학번</th>
-                    <th class="border border-black py-2.5 w-[14%] font-normal align-middle text-center">이름</th>
-                    <th class="border border-black py-2.5 w-[6%] font-normal align-middle text-center">개수</th>
-                    <th class="border border-black py-2.5 w-[42%] font-normal align-middle text-center">반납 후 서명</th>
+                    <th class="border border-black h-[40px] w-[6%] font-normal align-middle text-center leading-none">순번</th>
+                    <th class="border border-black h-[40px] w-[14%] font-normal align-middle text-center leading-none">대여일</th>
+                    <th class="border border-black h-[40px] w-[18%] font-normal align-middle text-center leading-none">학번</th>
+                    <th class="border border-black h-[40px] w-[14%] font-normal align-middle text-center leading-none">이름</th>
+                    <th class="border border-black h-[40px] w-[6%] font-normal align-middle text-center leading-none">개수</th>
+                    <th class="border border-black h-[40px] w-[42%] font-normal align-middle text-center leading-none">반납 후 서명</th>
                 </tr>
             </thead>
             <tbody id="table-body">
@@ -84,14 +84,14 @@
         const tbody = document.getElementById('table-body');
         for (let i = 1; i <= 30; i++) {
             const tr = document.createElement('tr');
-            tr.className = "h-[29px]"; // 기존 26px에서 29px로 늘려 서명 공간 확보
+            tr.className = "h-[30px]"; 
             tr.innerHTML = `
-                <td class="border border-black font-medium align-middle text-center">${i}</td>
-                <td class="border border-black align-middle text-center"></td>
-                <td class="border border-black align-middle text-center"></td>
-                <td class="border border-black align-middle text-center"></td>
-                <td class="border border-black align-middle text-center"></td>
-                <td class="border border-black align-middle text-center"></td>
+                <td class="border border-black font-medium align-middle text-center leading-none">${i}</td>
+                <td class="border border-black align-middle text-center leading-none"></td>
+                <td class="border border-black align-middle text-center leading-none"></td>
+                <td class="border border-black align-middle text-center leading-none"></td>
+                <td class="border border-black align-middle text-center leading-none"></td>
+                <td class="border border-black align-middle text-center leading-none"></td>
             `;
             tbody.appendChild(tr);
         }
@@ -134,14 +134,18 @@
             XLSX.writeFile(wb, "아동복지학과_충전기대여관리대장.xlsx");
         }
 
-        // 4. 이미지 다운로드 핸들러
-        function handleDownloadImage() {
+        // 4. 이미지 다운로드 핸들러 (async 추가)
+        async function handleDownloadImage() {
             if (typeof html2canvas === 'undefined') {
                 alert("이미지 변환 기능을 불러오는 중입니다. 잠시 후 다시 시도해주세요.");
                 return;
             }
             
             const container = document.getElementById('document-container');
+            
+            // 캡처 전 스크롤 위치 초기화 및 폰트 로드 완료 대기 (글자 쏠림 방지 핵심)
+            window.scrollTo(0, 0);
+            await document.fonts.ready;
             
             // 캡처 시 그림자를 일시적으로 제거하여 깔끔한 테두리로 저장
             container.classList.remove('shadow-xl');
@@ -171,6 +175,10 @@
             const { jsPDF } = window.jspdf;
             
             try {
+                // 캡처 전 스크롤 위치 초기화 및 폰트 로드 완료 대기 (글자 쏠림 방지 핵심)
+                window.scrollTo(0, 0);
+                await document.fonts.ready;
+
                 // 캡처 시 그림자 제거 및 폰트 로드를 위한 CORS 설정
                 container.classList.remove('shadow-xl');
                 const canvas = await html2canvas(container, { 
@@ -202,4 +210,3 @@
     </script>
 </body>
 </html>
-
