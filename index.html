@@ -13,6 +13,9 @@
     
     <!-- SheetJS (엑셀 다운로드 기능) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    <!-- html2canvas (이미지 다운로드 기능) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body class="min-h-screen bg-gray-100 py-8 px-4 flex flex-col items-center font-sans">
     
@@ -27,6 +30,14 @@
             엑셀 파일 다운로드
         </button>
         <button
+            id="download-img-btn"
+            class="flex items-center gap-2 px-5 py-2.5 rounded-lg text-white font-semibold shadow-md transition-colors bg-purple-600 hover:bg-purple-700"
+            onclick="handleDownloadImage()"
+        >
+            <i data-lucide="image" class="w-5 h-5"></i>
+            이미지 저장
+        </button>
+        <button
             class="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md transition-colors"
             onclick="window.print()"
         >
@@ -36,7 +47,7 @@
     </div>
 
     <!-- A4 용지 형태의 컨테이너 -->
-    <div class="bg-white p-10 shadow-xl w-full max-w-[21cm] min-h-[29.7cm] flex flex-col print:shadow-none print:p-0">
+    <div id="document-container" class="bg-white p-10 shadow-xl w-full max-w-[21cm] min-h-[29.7cm] flex flex-col print:shadow-none print:p-0">
         <table class="w-full border-collapse text-center text-sm" style="border: 1.5px solid #000">
             <thead>
                 <!-- 제목 행 -->
@@ -133,7 +144,30 @@
             XLSX.utils.book_append_sheet(wb, ws, "대여대장");
             XLSX.writeFile(wb, "아동복지학과_우산대여관리대장.xlsx");
         }
+
+        // 4. 이미지 다운로드 핸들러 함수
+        function handleDownloadImage() {
+            // 라이브러리 로딩 체크
+            if (typeof html2canvas === 'undefined') {
+                alert("이미지 변환 기능을 불러오는 중입니다. 잠시 후 다시 시도해주세요.");
+                return;
+            }
+
+            const container = document.getElementById('document-container');
+            
+            // 고화질로 캡처하기 위해 scale을 2로 설정
+            html2canvas(container, { scale: 2 }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = '아동복지학과_우산대여관리대장.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            }).catch(err => {
+                console.error("이미지 저장 중 오류 발생:", err);
+                alert("이미지 저장에 실패했습니다.");
+            });
+        }
     </script>
 </body>
 </html>
+
 
