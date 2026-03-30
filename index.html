@@ -26,58 +26,56 @@
         .f-gamja { font-family: 'Gamja Flower', cursive !important; }
         .f-black { font-family: 'Black Han Sans', sans-serif !important; }
 
-        /* [핵심 수정] 입력창 및 텍스트 레이아웃 최적화 */
-        .real-input, .fake-input { 
-            line-height: 1 !important; /* 줄높이를 최소화하여 공백 제거 */
+        /* [수정] 줄높이를 1로 고정하여 텍스트 상하 여백을 완전히 제거 */
+        .real-input, .fake-input, .q-num-label { 
+            line-height: 1 !important; 
             padding: 0 !important;
             margin: 0 !important;
             background: transparent;
             border: none !important;
-            width: 100%;
             outline: none;
-            display: block;
         }
         
-        /* 캡처용 텍스트 요소 */
         .fake-input { 
             display: none; 
             word-break: break-all; 
             white-space: pre-wrap; 
+            align-items: center;
             text-align: left;
         }
         
         /* 캡처 시 레이아웃 변형 방지 */
         .is-capturing .real-input { display: none !important; }
-        .is-capturing .fake-input { display: block !important; }
+        .is-capturing .fake-input { display: flex !important; }
 
         textarea.auto-expand {
             min-height: 1em;
             overflow: hidden;
             resize: none;
+            display: block;
         }
 
-        /* [핵심 수정] 문제 박스 디자인 - 여백을 극도로 줄임 */
+        /* [수정] 문제 박스: 번호 크기에 맞춰 슬림하게 축소하고 수직 중앙 정렬 */
         .question-text-box {
             background-color: rgba(255, 255, 255, 0.95);
-            border-radius: 10px;
-            padding: 6px 12px; /* 상하 6px로 대폭 축소 */
+            border-radius: 12px;
+            padding: 4px 16px; /* 상하 여백 최소화 */
             border: 2px solid rgba(59, 130, 246, 0.4); 
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
             width: 100%;
             display: flex;
-            align-items: center; /* 수직 중앙 */
+            align-items: center; /* 수직 가운데 정렬 핵심 */
+            justify-content: flex-start;
             height: auto !important;
-            min-height: 0 !important; /* 최소 높이 해제 */
+            min-height: 0 !important;
         }
 
-        /* 캡처 전용 스타일: 박스 팽창 방지 강제 적용 */
+        /* 캡처 시 스타일 강제 고정 */
         .is-capturing .question-text-box {
             background-color: #ffffff !important;
             border: 2px solid #3b82f6 !important;
             box-shadow: none !important;
-            padding: 6px 12px !important;
-            min-height: 0 !important;
-            height: auto !important;
+            padding: 4px 16px !important;
         }
 
         .font-toolbar { display: flex; gap: 4px; margin-bottom: 2px; }
@@ -92,9 +90,6 @@
         }
         .font-choice-btn.active { background: #3b82f6; color: white; border-color: #3b82f6; }
 
-        .v-center-row { display: flex; align-items: center; }
-
-        /* 갤러리 가로 스크롤 */
         .custom-scrollbar::-webkit-scrollbar { height: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 2px; }
@@ -143,9 +138,9 @@
                         <button class="font-choice-btn" onclick="setItemFont('topic-input-wrap', 'f-black', this)">블랙</button>
                     </div>
                 </div>
-                <div class="v-center-row gap-2">
+                <div class="flex items-center gap-2">
                     <label class="shrink-0 text-base md:text-lg font-bold text-gray-800 tp-font">오늘의 주제 :</label>
-                    <div id="topic-input-wrap" class="flex-grow relative f-noto capture-input-wrapper v-center-row">
+                    <div id="topic-input-wrap" class="flex-grow relative f-noto capture-input-wrapper flex items-center">
                         <input type="text" id="topic-input" class="real-input font-bold text-gray-900 px-1" style="font-size: 18px;">
                         <div class="fake-input font-bold text-gray-900 px-1 border-b border-transparent" style="font-size: 18px;"></div>
                     </div>
@@ -175,7 +170,6 @@
             const toolbar = btn.parentElement;
             toolbar.querySelectorAll('.font-choice-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
-            if (targetId === 'topic-input-wrap') setTimeout(adjustTopicFontSize, 50);
         }
 
         document.addEventListener("DOMContentLoaded", () => {
@@ -209,7 +203,7 @@
                             else { w = Math.round((w * maxSize) / h); h = maxSize; }
                         }
                         canvas.width = w; canvas.height = h;
-                        ctx = canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
                         resolve(canvas.toDataURL('image/jpeg', 0.85)); 
                     };
                 });
@@ -247,16 +241,6 @@
                 reader.readAsDataURL(file);
             });
 
-            window.adjustTopicFontSize = function() {
-                const maxWidth = topicInput.clientWidth - 10;
-                if (maxWidth <= 0) return;
-                const fake = topicInput.nextElementSibling;
-                let fontSize = 18;
-                topicInput.style.fontSize = fontSize + 'px';
-                if(fake) fake.style.fontSize = fontSize + 'px';
-            }
-            topicInput.addEventListener('input', adjustTopicFontSize);
-
             function getCircleNumber(index) { return String.fromCharCode(0x2460 + index); }
 
             function createOptionHTML(qId, index) {
@@ -287,7 +271,8 @@
                         </div>
                     </div>
                     <div class="question-text-box">
-                        <div class="mr-3 min-w-[24px] flex items-center justify-center font-bold text-blue-700 tp-font text-lg shrink-0">
+                        <!-- [수정] 번호 크기를 대폭 키우고 굵게 적용 -->
+                        <div class="mr-3 min-w-[32px] flex items-center justify-center font-black text-blue-700 tp-font text-3xl shrink-0">
                             <span class="q-num-label">${qIndex}.</span>
                         </div>
                         <div id="${contentId}" class="flex-grow relative f-noto capture-input-wrapper flex items-center overflow-hidden">
@@ -319,7 +304,7 @@
             captureBtn.onclick = async () => {
                 if (captureBtn.disabled) return;
                 captureBtn.disabled = true;
-                captureBtn.textContent = '저장 준비 중...';
+                captureBtn.textContent = '저장 중...';
                 document.body.classList.add('capturing');
                 captureArea.classList.add('is-capturing');
                 window.scrollTo(0, 0);
@@ -333,7 +318,7 @@
                         fake.style.fontWeight = style.fontWeight;
                         fake.style.fontSize = style.fontSize;
                         fake.style.color = style.color;
-                        fake.style.lineHeight = "1"; /* 저장 시 줄높이를 1로 강제하여 박스 팽창 방지 */
+                        fake.style.lineHeight = "1";
                     }
                 });
 
@@ -352,8 +337,8 @@
                         document.body.appendChild(link);
                         link.click();
                         document.body.removeChild(link);
-                        setTimeout(() => URL.revokeObjectURL(url), 200);
-                        showToast("성공적으로 저장되었습니다.");
+                        URL.revokeObjectURL(url);
+                        showToast("이미지가 저장되었습니다.");
                     }, "image/png");
                 } catch (err) { 
                     showToast("저장 실패"); 
