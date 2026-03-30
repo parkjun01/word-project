@@ -3,7 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>우산 대여 관리 대장</title>
+    <title>충전기 대여 관리 대장</title>
+    
+    <!-- Google Fonts (귀여운 Jua 글꼴 적용) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
     
     <!-- Tailwind CSS (스타일링) -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -17,7 +22,7 @@
     <!-- html2canvas (이미지 다운로드 기능) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
-<body class="min-h-screen bg-gray-100 py-8 px-4 flex flex-col items-center font-sans">
+<body class="min-h-screen bg-gray-100 py-8 px-4 flex flex-col items-center" style="font-family: 'Jua', sans-serif;">
     
     <!-- 상단 버튼 영역 (인쇄 시 숨김) -->
     <div class="mb-6 flex gap-4 print:hidden">
@@ -53,25 +58,21 @@
                 <!-- 제목 행 -->
                 <tr>
                     <th 
-                        colspan="7" 
-                        class="py-6 border border-black text-[22px] font-bold tracking-widest"
-                        style="background-color: #A5D8C6;"
+                        colspan="6" 
+                        class="py-6 border border-black text-[26px] tracking-widest text-white font-normal"
+                        style="background-color: #2F855A;"
                     >
-                        아동복지학과 &nbsp;&nbsp;우산 &nbsp;&nbsp;대여 &nbsp;&nbsp;관리 &nbsp;&nbsp;대장
+                        아동복지학과 &nbsp;&nbsp;충전기 &nbsp;&nbsp;대여 &nbsp;&nbsp;관리 &nbsp;&nbsp;대장
                     </th>
                 </tr>
                 <!-- 열 헤더 -->
-                <tr class="bg-white">
-                    <th class="border border-black py-2.5 w-[6%] font-semibold">순번</th>
-                    <th class="border border-black py-2.5 w-[14%] font-semibold">대여일</th>
-                    <th class="border border-black py-2.5 w-[18%] font-semibold">학번</th>
-                    <th class="border border-black py-2.5 w-[15%] font-semibold">이름</th>
-                    <th class="border border-black py-2.5 w-[7%] font-semibold">개수</th>
-                    <th class="border border-black py-2.5 w-[16%] font-semibold">반납예정일</th>
-                    <th class="border border-black py-1.5 w-[24%] font-semibold leading-tight">
-                        실제반납일<br />
-                        <span class="text-[11px] font-normal tracking-tighter">(반납시 작성)</span>
-                    </th>
+                <tr class="bg-white text-base">
+                    <th class="border border-black py-2.5 w-[8%] font-normal">순번</th>
+                    <th class="border border-black py-2.5 w-[16%] font-normal">대여일</th>
+                    <th class="border border-black py-2.5 w-[20%] font-normal">학번</th>
+                    <th class="border border-black py-2.5 w-[16%] font-normal">이름</th>
+                    <th class="border border-black py-2.5 w-[10%] font-normal">개수</th>
+                    <th class="border border-black py-2.5 w-[30%] font-normal">반납 후 서명</th>
                 </tr>
             </thead>
             <tbody id="table-body">
@@ -96,7 +97,6 @@
                 <td class="border border-black"></td>
                 <td class="border border-black"></td>
                 <td class="border border-black"></td>
-                <td class="border border-black"></td>
             `;
             tbody.appendChild(tr);
         }
@@ -113,20 +113,20 @@
             
             // 엑셀 데이터 구성
             const wsData = [
-                ["아동복지학과 우산 대여 관리 대장", "", "", "", "", "", ""],
-                ["순번", "대여일", "학번", "이름", "개수", "반납예정일", "실제반납일\n(반납시 작성)"]
+                ["아동복지학과 충전기 대여 관리 대장", "", "", "", "", ""],
+                ["순번", "대여일", "학번", "이름", "개수", "반납 후 서명"]
             ];
 
             // 엑셀 파일에도 1번부터 30번까지 빈 행 생성
             for (let i = 1; i <= 30; i++) {
-                wsData.push([i, "", "", "", "", "", ""]);
+                wsData.push([i, "", "", "", "", ""]);
             }
 
             const ws = XLSX.utils.aoa_to_sheet(wsData);
 
             // 첫 번째 행 셀 병합 (제목 부분)
             ws["!merges"] = [
-                { s: { r: 0, c: 0 }, e: { r: 0, c: 6 } }
+                { s: { r: 0, c: 0 }, e: { r: 0, c: 5 } }
             ];
 
             // 열 너비 설정
@@ -136,13 +136,12 @@
                 { wch: 18 }, // 학번
                 { wch: 14 }, // 이름
                 { wch: 8 },  // 개수
-                { wch: 16 }, // 반납예정일
-                { wch: 22 }  // 실제반납일
+                { wch: 20 }  // 반납 후 서명
             ];
 
             // 파일 생성 및 다운로드 실행
             XLSX.utils.book_append_sheet(wb, ws, "대여대장");
-            XLSX.writeFile(wb, "아동복지학과_우산대여관리대장.xlsx");
+            XLSX.writeFile(wb, "아동복지학과_충전기대여관리대장.xlsx");
         }
 
         // 4. 이미지 다운로드 핸들러 함수
@@ -158,7 +157,7 @@
             // 고화질로 캡처하기 위해 scale을 2로 설정
             html2canvas(container, { scale: 2 }).then(canvas => {
                 const link = document.createElement('a');
-                link.download = '아동복지학과_우산대여관리대장.png';
+                link.download = '아동복지학과_충전기대여관리대장.png';
                 link.href = canvas.toDataURL('image/png');
                 link.click();
             }).catch(err => {
@@ -169,5 +168,4 @@
     </script>
 </body>
 </html>
-
 
