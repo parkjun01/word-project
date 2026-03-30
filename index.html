@@ -59,7 +59,7 @@
                 <tr>
                     <th 
                         colspan="6" 
-                        class="py-6 border border-black text-[26px] tracking-widest text-white font-normal"
+                        class="py-10 border border-black text-[36px] tracking-widest text-white font-normal"
                         style="background-color: #2F855A;"
                     >
                         아동복지학과 &nbsp;&nbsp;충전기 &nbsp;&nbsp;대여 &nbsp;&nbsp;관리 &nbsp;&nbsp;대장
@@ -141,7 +141,7 @@
 
             // 행 높이 설정
             ws["!rows"] = [
-                { hpx: 50 }, // 제목 행 높이
+                { hpx: 80 }, // 제목 행 높이 늘림
                 { hpx: 30 }  // 헤더 행 높이
             ];
             for (let i = 2; i <= 31; i++) {
@@ -169,7 +169,7 @@
                     // 제목 행 (0번째 행) 스타일 (배경색, 폰트색)
                     if (R === 0) {
                         ws[cellAddress].s.fill = { fgColor: { rgb: "FF2F855A" } }; // 초록색 배경
-                        ws[cellAddress].s.font = { color: { rgb: "FFFFFFFF" }, sz: 18, bold: true };
+                        ws[cellAddress].s.font = { color: { rgb: "FFFFFFFF" }, sz: 24, bold: true }; // 글자 크기 증가
                     }
                     // 헤더 행 (1번째 행) 스타일
                     else if (R === 1) {
@@ -208,6 +208,7 @@
     </script>
 </body>
 </html>
+
 
 
 
