@@ -2,271 +2,138 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Boast in God</title>
-
-    <!-- 구글 웹폰트 연동 -->
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>우산 대여 관리 대장</title>
     
-    <!-- Tailwind CSS -->
+    <!-- Tailwind CSS (스타일링) -->
     <script src="https://cdn.tailwindcss.com"></script>
-
-    <style>
-        .font-title { font-family: 'Playfair Display', serif; }
-        .tp-font { font-family: 'Noto Sans KR', sans-serif !important; }
-
-        /* contenteditable 텍스트 블록 기본 속성 */
-        .editable-element {
-            outline: none !important;
-            word-break: break-word;
-            white-space: pre-wrap;
-            cursor: text;
-        }
-
-        /* 스크롤바 디자인 */
-        .custom-scrollbar::-webkit-scrollbar { height: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-
-        /* [핵심] 인쇄(프린트/PDF) 최적화 스타일 */
-        @media print {
-            body { 
-                background: white !important; 
-                margin: 0; 
-                padding: 0; 
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-            }
-            .print-hide { display: none !important; }
-            #capture-area {
-                box-shadow: none !important;
-                border: none !important;
-                margin: 0 auto !important;
-                page-break-inside: avoid;
-                transform: scale(0.95); /* 인쇄 시 잘림 방지 */
-                transform-origin: top center;
-            }
-            /* 프린트 시 배경색/이미지가 강제로 인쇄되도록 설정 */
-            * {
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-            }
-        }
-    </style>
+    
+    <!-- Lucide Icons (버튼 아이콘) -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- SheetJS (엑셀 다운로드 기능) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
-<body class="bg-gray-100 min-h-screen flex flex-col items-center p-4 py-8 tp-font relative">
-
-    <div id="toast" class="print-hide fixed top-4 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white px-6 py-3 rounded-full shadow-2xl transition-opacity duration-300 opacity-0 pointer-events-none z-50 font-bold text-sm text-center min-w-[250px]">
-        알림 메시지
+<body class="min-h-screen bg-gray-100 py-8 px-4 flex flex-col items-center font-sans">
+    
+    <!-- 상단 버튼 영역 (인쇄 시 숨김) -->
+    <div class="mb-6 flex gap-4 print:hidden">
+        <button
+            id="download-btn"
+            class="flex items-center gap-2 px-5 py-2.5 rounded-lg text-white font-semibold shadow-md transition-colors bg-green-600 hover:bg-green-700"
+            onclick="handleDownloadExcel()"
+        >
+            <i data-lucide="download" class="w-5 h-5"></i>
+            엑셀 파일 다운로드
+        </button>
+        <button
+            class="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md transition-colors"
+            onclick="window.print()"
+        >
+            <i data-lucide="printer" class="w-5 h-5"></i>
+            문서 인쇄하기
+        </button>
     </div>
 
-    <!-- 상단 컨트롤 패널 (인쇄 시 숨김) -->
-    <div class="print-hide w-full max-w-lg mb-6 bg-white p-4 rounded-xl shadow-md border border-gray-200 flex justify-between items-center">
-        <span class="font-bold text-gray-800 text-sm">🖼️ 배경 이미지</span>
-        <label class="cursor-pointer bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-bold transition-colors shadow-sm">
-            + 사진 업로드
-            <input type="file" id="bg-upload" class="hidden" accept="image/*">
-        </label>
+    <!-- A4 용지 형태의 컨테이너 -->
+    <div class="bg-white p-10 shadow-xl w-full max-w-[21cm] min-h-[29.7cm] flex flex-col print:shadow-none print:p-0">
+        <table class="w-full border-collapse text-center text-sm" style="border: 1.5px solid #000">
+            <thead>
+                <!-- 제목 행 -->
+                <tr>
+                    <th 
+                        colspan="7" 
+                        class="py-6 border border-black text-[22px] font-bold tracking-widest"
+                        style="background-color: #A5D8C6;"
+                    >
+                        아동복지학과 &nbsp;&nbsp;우산 &nbsp;&nbsp;대여 &nbsp;&nbsp;관리 &nbsp;&nbsp;대장
+                    </th>
+                </tr>
+                <!-- 열 헤더 -->
+                <tr class="bg-white">
+                    <th class="border border-black py-2.5 w-[6%] font-semibold">순번</th>
+                    <th class="border border-black py-2.5 w-[14%] font-semibold">대여일</th>
+                    <th class="border border-black py-2.5 w-[18%] font-semibold">학번</th>
+                    <th class="border border-black py-2.5 w-[15%] font-semibold">이름</th>
+                    <th class="border border-black py-2.5 w-[7%] font-semibold">개수</th>
+                    <th class="border border-black py-2.5 w-[16%] font-semibold">반납예정일</th>
+                    <th class="border border-black py-1.5 w-[24%] font-semibold leading-tight">
+                        실제반납일<br />
+                        <span class="text-[11px] font-normal tracking-tighter">(반납시 작성)</span>
+                    </th>
+                </tr>
+            </thead>
+            <tbody id="table-body">
+                <!-- JavaScript를 통해 자동으로 30행이 생성됩니다 -->
+            </tbody>
+        </table>
     </div>
-
-    <!-- 메인 양식 영역 (이 부분만 인쇄됨) -->
-    <div id="capture-area" class="relative w-full max-w-lg shadow-2xl rounded-2xl overflow-hidden bg-white min-h-[850px] flex flex-col border border-gray-100 mb-10">
-        
-        <!-- 배경 이미지 레이어 -->
-        <div class="absolute inset-0 pointer-events-none z-0 opacity-30">
-            <img id="main-bg-img" src="" alt="Background" class="w-full h-full object-cover object-center hidden">
-            <div id="bg-placeholder" class="w-full h-full bg-slate-100 flex items-center justify-center text-gray-300 font-bold">
-                배경을 추가해주세요
-            </div>
-        </div>
-
-        <div class="relative z-10 p-8 flex flex-col flex-grow">
-            
-            <!-- 타이틀 -->
-            <div class="text-left mb-8">
-                <h2 class="text-3xl font-bold text-gray-700 italic font-title">
-                    Boast not tomorrow
-                </h2>
-                <h1 class="text-5xl font-black text-blue-600 mt-2 tracking-wide font-title">
-                    Boast in God
-                </h1>
-            </div>
-
-            <!-- 주제 입력 영역 -->
-            <div class="mb-10 flex items-center gap-3">
-                <label class="shrink-0 text-xl font-bold text-gray-800 flex items-center h-full">오늘의 주제 :</label>
-                <div class="flex-grow">
-                    <div id="topic-input" contenteditable="true" spellcheck="false"
-                         class="editable-element w-full bg-transparent font-bold text-gray-800 border-b-2 border-gray-400 focus:border-blue-500 pb-1 transition-colors"
-                         style="font-size: 22px; line-height: 1.4;"></div>
-                </div>
-            </div>
-
-            <!-- 퀴즈 리스트 영역 -->
-            <div class="flex-grow flex flex-col">
-                <h3 class="text-xl font-bold text-gray-800 mb-6">오늘의 퀴즈</h3>
-
-                <div class="space-y-8" id="questions-container">
-                    
-                    <!-- 1번 문제 (주관식) -->
-                    <div class="relative group">
-                        <div class="w-full bg-white/95 rounded-xl border-2 border-blue-500 shadow-sm px-5 py-3 flex flex-row items-center min-h-[60px] gap-3">
-                            <div class="w-[32px] shrink-0 flex justify-center items-center">
-                                <span class="text-[26px] font-black text-blue-600 leading-none m-0 p-0">1.</span>
-                            </div>
-                            <div class="flex-grow flex items-center">
-                                <div contenteditable="true" spellcheck="false" class="editable-element w-full text-xl font-bold text-gray-800 m-0 p-0" style="line-height: 1.4;"></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 2번 문제 (주관식) -->
-                    <div class="relative group">
-                        <div class="w-full bg-white/95 rounded-xl border-2 border-blue-500 shadow-sm px-5 py-3 flex flex-row items-center min-h-[60px] gap-3">
-                            <div class="w-[32px] shrink-0 flex justify-center items-center">
-                                <span class="text-[26px] font-black text-blue-600 leading-none m-0 p-0">2.</span>
-                            </div>
-                            <div class="flex-grow flex items-center">
-                                <div contenteditable="true" spellcheck="false" class="editable-element w-full text-xl font-bold text-gray-800 m-0 p-0" style="line-height: 1.4;"></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 3번 문제 (객관식) -->
-                    <div class="relative group">
-                        <div class="w-full bg-white/95 rounded-xl border-2 border-blue-500 shadow-sm px-5 py-3 flex flex-row items-center min-h-[60px] gap-3">
-                            <div class="w-[32px] shrink-0 flex justify-center items-center">
-                                <span class="text-[26px] font-black text-blue-600 leading-none m-0 p-0">3.</span>
-                            </div>
-                            <div class="flex-grow flex items-center">
-                                <div contenteditable="true" spellcheck="false" class="editable-element w-full text-xl font-bold text-gray-800 m-0 p-0" style="line-height: 1.4;"></div>
-                            </div>
-                        </div>
-                        <!-- 객관식 하단 선택지 -->
-                        <div class="pl-[44px] space-y-3 mt-4">
-                            <!-- 선택지 1 -->
-                            <div class="flex items-center gap-3">
-                                <div class="min-w-[28px] flex justify-center items-center shrink-0">
-                                    <span class="font-bold text-gray-600 text-2xl leading-none">①</span>
-                                </div>
-                                <div class="flex-grow flex items-center">
-                                    <div contenteditable="true" spellcheck="false" class="editable-element w-full border-b-2 border-gray-300 text-lg text-gray-800 pb-1" style="line-height: 1.2;"></div>
-                                </div>
-                            </div>
-                            <!-- 선택지 2 -->
-                            <div class="flex items-center gap-3">
-                                <div class="min-w-[28px] flex justify-center items-center shrink-0">
-                                    <span class="font-bold text-gray-600 text-2xl leading-none">②</span>
-                                </div>
-                                <div class="flex-grow flex items-center">
-                                    <div contenteditable="true" spellcheck="false" class="editable-element w-full border-b-2 border-gray-300 text-lg text-gray-800 pb-1" style="line-height: 1.2;"></div>
-                                </div>
-                            </div>
-                            <!-- 선택지 3 -->
-                            <div class="flex items-center gap-3">
-                                <div class="min-w-[28px] flex justify-center items-center shrink-0">
-                                    <span class="font-bold text-gray-600 text-2xl leading-none">③</span>
-                                </div>
-                                <div class="flex-grow flex items-center">
-                                    <div contenteditable="true" spellcheck="false" class="editable-element w-full border-b-2 border-gray-300 text-lg text-gray-800 pb-1" style="line-height: 1.2;"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 인쇄(PDF 저장) 버튼 -->
-    <button id="print-btn" class="print-hide mt-4 mb-12 px-12 py-4 bg-green-600 hover:bg-green-700 text-white text-lg font-bold rounded-full shadow-lg transition-all transform hover:scale-105">
-        문서 인쇄하기 / PDF 저장
-    </button>
 
     <script>
-        document.addEventListener("DOMContentLoaded", () => {
-            const bgImg = document.getElementById('main-bg-img');
-            const bgPlaceholder = document.getElementById('bg-placeholder');
-            const bgUpload = document.getElementById('bg-upload');
-            const toast = document.getElementById('toast');
-            const printBtn = document.getElementById('print-btn');
+        // 1. 아이콘 초기화 렌더링
+        lucide.createIcons();
 
-            // 토스트 알림 함수
-            function showToast(msg) {
-                toast.textContent = msg;
-                toast.style.opacity = '1';
-                setTimeout(() => toast.style.opacity = '0', 2500);
+        // 2. 1번부터 30번까지 테이블 빈 행 동적 렌더링
+        const tbody = document.getElementById('table-body');
+        for (let i = 1; i <= 30; i++) {
+            const tr = document.createElement('tr');
+            tr.className = "h-[26px]"; // 행 높이 지정
+            tr.innerHTML = `
+                <td class="border border-black font-medium">${i}</td>
+                <td class="border border-black"></td>
+                <td class="border border-black"></td>
+                <td class="border border-black"></td>
+                <td class="border border-black"></td>
+                <td class="border border-black"></td>
+                <td class="border border-black"></td>
+            `;
+            tbody.appendChild(tr);
+        }
+
+        // 3. 엑셀 다운로드 핸들러 함수
+        function handleDownloadExcel() {
+            // 라이브러리 로딩 체크
+            if (typeof XLSX === 'undefined') {
+                alert("엑셀 변환 기능을 불러오는 중입니다. 잠시 후 다시 시도해주세요.");
+                return;
             }
 
-            // 초기 배경 이미지 로드 (로컬 스토리지)
-            const savedBg = localStorage.getItem('boast_saved_bg_html');
-            if (savedBg) {
-                bgImg.src = savedBg;
-                bgImg.classList.remove('hidden');
-                bgPlaceholder.classList.add('hidden');
+            const wb = XLSX.utils.book_new();
+            
+            // 엑셀 데이터 구성
+            const wsData = [
+                ["아동복지학과 우산 대여 관리 대장", "", "", "", "", "", ""],
+                ["순번", "대여일", "학번", "이름", "개수", "반납예정일", "실제반납일\n(반납시 작성)"]
+            ];
+
+            // 엑셀 파일에도 1번부터 30번까지 빈 행 생성
+            for (let i = 1; i <= 30; i++) {
+                wsData.push([i, "", "", "", "", "", ""]);
             }
 
-            // 이미지 업로드 및 리사이징 로직
-            const autoAdjustImage = (base64Str) => {
-                return new Promise((resolve) => {
-                    const img = new Image();
-                    img.src = base64Str;
-                    img.onload = () => {
-                        const canvas = document.createElement('canvas');
-                        let w = img.width, h = img.height, maxSize = 1200;
-                        if (w > maxSize || h > maxSize) {
-                            if (w > h) { h = Math.round((h * maxSize) / w); w = maxSize; }
-                            else { w = Math.round((w * maxSize) / h); h = maxSize; }
-                        }
-                        canvas.width = w; canvas.height = h;
-                        const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0, w, h);
-                        resolve(canvas.toDataURL('image/jpeg', 0.85)); 
-                    };
-                });
-            };
+            const ws = XLSX.utils.aoa_to_sheet(wsData);
 
-            bgUpload.addEventListener('change', async (e) => {
-                const file = e.target.files[0];
-                if (!file) return;
-                
-                const reader = new FileReader();
-                reader.onload = async (event) => {
-                    const finalImage = await autoAdjustImage(event.target.result);
-                    bgImg.src = finalImage;
-                    bgImg.classList.remove('hidden');
-                    bgPlaceholder.classList.add('hidden');
-                    localStorage.setItem('boast_saved_bg_html', finalImage);
-                    showToast("배경이 적용되었습니다.");
-                };
-                reader.readAsDataURL(file);
-            });
+            // 첫 번째 행 셀 병합 (제목 부분)
+            ws["!merges"] = [
+                { s: { r: 0, c: 0 }, e: { r: 0, c: 6 } }
+            ];
 
-            // 엔터키 제어
-            document.querySelectorAll('.editable-element').forEach(el => {
-                el.addEventListener('keydown', (e) => {
-                    if (e.key === 'Enter' && el.classList.contains('border-b-2')) {
-                        e.preventDefault();
-                    }
-                });
-            });
+            // 열 너비 설정
+            ws["!cols"] = [
+                { wch: 6 },  // 순번
+                { wch: 14 }, // 대여일
+                { wch: 18 }, // 학번
+                { wch: 14 }, // 이름
+                { wch: 8 },  // 개수
+                { wch: 16 }, // 반납예정일
+                { wch: 22 }  // 실제반납일
+            ];
 
-            // 인쇄하기 동작
-            printBtn.addEventListener('click', () => {
-                // 커서 깜빡임(포커스) 해제
-                if (document.activeElement && document.activeElement.blur) {
-                    document.activeElement.blur();
-                }
-
-                // 현재 사용 중인 창이 Iframe 내부일 경우 보안에 막힐 수 있어 안전장치 추가
-                try {
-                    window.print();
-                } catch (err) {
-                    showToast("현재 창에서는 인쇄가 차단되었습니다. 새 창으로 열어서 실행해주세요.");
-                }
-            });
-        });
+            // 파일 생성 및 다운로드 실행
+            XLSX.utils.book_append_sheet(wb, ws, "대여대장");
+            XLSX.writeFile(wb, "아동복지학과_우산대여관리대장.xlsx");
+        }
     </script>
 </body>
 </html>
+
