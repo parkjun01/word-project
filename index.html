@@ -15,6 +15,7 @@
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body class="min-h-screen bg-gray-100 py-8 px-4 flex flex-col items-center" style="font-family: 'Jua', sans-serif;">
     
@@ -39,6 +40,13 @@
         >
             <i data-lucide="printer" class="w-5 h-5"></i>
             문서 인쇄
+        </button>
+        <button
+            class="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg shadow-md transition-colors"
+            onclick="handleDownloadPDF()"
+        >
+            <i data-lucide="file-down" class="w-5 h-5"></i>
+            PDF 저장
         </button>
     </div>
 
@@ -135,18 +143,63 @@
             
             const container = document.getElementById('document-container');
             
-            html2canvas(container, { scale: 2 }).then(canvas => {
+            // 캡처 시 그림자를 일시적으로 제거하여 깔끔한 테두리로 저장
+            container.classList.remove('shadow-xl');
+            
+            // useCORS: true 옵션을 추가하여 귀여운 폰트(Google Font)가 그대로 캡처되도록 설정
+            html2canvas(container, { scale: 2, useCORS: true, backgroundColor: '#ffffff' }).then(canvas => {
+                container.classList.add('shadow-xl'); // 캡처 후 그림자 복구
                 const link = document.createElement('a');
                 link.download = '아동복지학과_충전기대여관리대장.png';
                 link.href = canvas.toDataURL('image/png');
                 link.click();
             }).catch(err => {
+                container.classList.add('shadow-xl');
                 console.error("이미지 저장 중 오류 발생:", err);
                 alert("이미지 저장 중 오류가 발생했습니다.");
             });
         }
+
+        // 5. PDF 다운로드 핸들러
+        async function handleDownloadPDF() {
+            if (typeof html2canvas === 'undefined' || typeof window.jspdf === 'undefined') {
+                alert("PDF 변환 기능을 불러오는 중입니다. 잠시 후 다시 시도해주세요.");
+                return;
+            }
+            
+            const container = document.getElementById('document-container');
+            const { jsPDF } = window.jspdf;
+            
+            try {
+                // 캡처 시 그림자 제거 및 폰트 로드를 위한 CORS 설정
+                container.classList.remove('shadow-xl');
+                const canvas = await html2canvas(container, { 
+                    scale: 2, 
+                    useCORS: true, 
+                    backgroundColor: '#ffffff' 
+                });
+                container.classList.add('shadow-xl'); // 캡처 후 그림자 복구
+                
+                const imgData = canvas.toDataURL('image/png');
+                
+                // A4 용지(210x297mm) 비율로 PDF 생성
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const pdfHeight = pdf.internal.pageSize.getHeight();
+                
+                // 캔버스 비율에 맞춰 이미지 크기 계산
+                const imgWidth = pdfWidth;
+                const imgHeight = (canvas.height * pdfWidth) / canvas.width;
+                
+                pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+                pdf.save('아동복지학과_충전기대여관리대장.pdf');
+            } catch (err) {
+                container.classList.add('shadow-xl');
+                console.error("PDF 저장 중 오류 발생:", err);
+                alert("PDF 저장 중 오류가 발생했습니다.");
+            }
+        }
     </script>
 </body>
 </html>
-
 
