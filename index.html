@@ -27,6 +27,11 @@
                 print-color-adjust: exact !important;
             }
         }
+        /* 인쇄 시 한 페이지에 딱 맞게 들어가도록 A4 여백 설정 */
+        @page {
+            size: A4 portrait;
+            margin: 10mm;
+        }
     </style>
 </head>
 <body class="min-h-screen bg-gray-100 py-8 px-4 flex flex-col items-center" style="font-family: 'Jua', sans-serif;">
@@ -62,26 +67,26 @@
         </button>
     </div>
 
-    <div id="document-container" class="bg-white p-10 shadow-xl w-full max-w-[21cm] min-h-[29.7cm] flex flex-col print:shadow-none print:p-0">
+    <div id="document-container" class="bg-white p-6 shadow-xl w-full max-w-[21cm] min-h-[29.7cm] flex flex-col print:shadow-none print:p-0">
         <table class="w-full border-collapse text-center text-sm table-fixed" style="border: 1.5px solid #000">
             <thead>
                 <tr>
                     <th 
                         colspan="6" 
-                        class="h-[110px] border border-black text-[30px] tracking-widest text-white font-normal leading-[110px]"
+                        class="h-[90px] border border-black text-[28px] tracking-widest text-white font-normal leading-[90px]"
                         style="background-color: #2F855A;"
                     >
                         아동복지학과 충전기 대여 관리 대장
                     </th>
                 </tr>
                 <tr class="bg-white text-base">
-                    <!-- align-middle 제거 및 높이와 줄간격을 동일하게(40px) 맞추어 글자 쏠림 원천 차단 -->
-                    <th class="border border-black h-[40px] w-[6%] font-normal text-center leading-[40px]">순번</th>
-                    <th class="border border-black h-[40px] w-[14%] font-normal text-center leading-[40px]">대여일</th>
-                    <th class="border border-black h-[40px] w-[18%] font-normal text-center leading-[40px]">학번</th>
-                    <th class="border border-black h-[40px] w-[14%] font-normal text-center leading-[40px]">이름</th>
-                    <th class="border border-black h-[40px] w-[6%] font-normal text-center leading-[40px]">개수</th>
-                    <th class="border border-black h-[40px] w-[42%] font-normal text-center leading-[40px]">반납 후 서명</th>
+                    <!-- align-middle 제거 및 높이와 줄간격을 동일하게(34px) 맞추어 글자 쏠림 원천 차단 -->
+                    <th class="border border-black h-[34px] w-[6%] font-normal text-center leading-[34px]">순번</th>
+                    <th class="border border-black h-[34px] w-[14%] font-normal text-center leading-[34px]">대여일</th>
+                    <th class="border border-black h-[34px] w-[18%] font-normal text-center leading-[34px]">학번</th>
+                    <th class="border border-black h-[34px] w-[14%] font-normal text-center leading-[34px]">이름</th>
+                    <th class="border border-black h-[34px] w-[6%] font-normal text-center leading-[34px]">개수</th>
+                    <th class="border border-black h-[34px] w-[42%] font-normal text-center leading-[34px]">반납 후 서명</th>
                 </tr>
             </thead>
             <tbody id="table-body">
@@ -98,14 +103,14 @@
         const tbody = document.getElementById('table-body');
         for (let i = 1; i <= 30; i++) {
             const tr = document.createElement('tr');
-            // 칸 높이 30px, 줄 간격 30px로 강제 고정
+            // 칸 높이 28px, 줄 간격 28px로 강제 고정 (한 페이지 인쇄를 위해 크기 조정)
             tr.innerHTML = `
-                <td class="border border-black h-[30px] font-medium text-center leading-[30px]">${i}</td>
-                <td class="border border-black h-[30px] text-center leading-[30px]"></td>
-                <td class="border border-black h-[30px] text-center leading-[30px]"></td>
-                <td class="border border-black h-[30px] text-center leading-[30px]"></td>
-                <td class="border border-black h-[30px] text-center leading-[30px]"></td>
-                <td class="border border-black h-[30px] text-center leading-[30px]"></td>
+                <td class="border border-black h-[28px] font-medium text-center leading-[28px]">${i}</td>
+                <td class="border border-black h-[28px] text-center leading-[28px]"></td>
+                <td class="border border-black h-[28px] text-center leading-[28px]"></td>
+                <td class="border border-black h-[28px] text-center leading-[28px]"></td>
+                <td class="border border-black h-[28px] text-center leading-[28px]"></td>
+                <td class="border border-black h-[28px] text-center leading-[28px]"></td>
             `;
             tbody.appendChild(tr);
         }
@@ -227,6 +232,4 @@
     </script>
 </body>
 </html>
-
-
 
