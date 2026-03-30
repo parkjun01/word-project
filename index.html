@@ -19,22 +19,37 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     
-    <!-- 인쇄 시 배경색이 무조건 나오도록 강제하는 스타일 추가 -->
+    <!-- A4 1장에 완벽하게 맞추기 위한 엄격한 CSS 설정 -->
     <style>
+        /* 웹 폰트 로드 대기 */
+        body { font-family: 'Jua', sans-serif; }
+        
+        @page {
+            size: A4 portrait; /* ISO A4 세로 고정 */
+            margin: 0; /* 브라우저 자체 여백 완전 제거 (문서 컨테이너의 padding으로 대체) */
+        }
+        
         @media print {
+            body { 
+                background-color: white; 
+                margin: 0; 
+                padding: 0;
+            }
             * {
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
             }
-        }
-        /* 인쇄 시 한 페이지에 딱 맞게 들어가도록 A4 여백 설정 */
-        @page {
-            size: A4 portrait;
-            margin: 10mm;
+            #document-container {
+                box-shadow: none !important;
+                margin: 0 !important;
+                /* A4 규격 고정 */
+                width: 210mm !important;
+                height: 297mm !important;
+            }
         }
     </style>
 </head>
-<body class="min-h-screen bg-gray-100 py-8 px-4 flex flex-col items-center" style="font-family: 'Jua', sans-serif;">
+<body class="min-h-screen bg-gray-200 py-8 px-4 flex flex-col items-center">
     
     <div class="mb-6 flex gap-3 print:hidden">
         <button
@@ -67,55 +82,58 @@
         </button>
     </div>
 
-    <div id="document-container" class="bg-white p-6 shadow-xl w-full max-w-[21cm] min-h-[29.7cm] flex flex-col print:shadow-none print:p-0">
-        <table class="w-full border-collapse text-center text-sm table-fixed" style="border: 1.5px solid #000">
+    <!-- 
+      ISO A4 실제 크기: 210mm x 297mm
+      위아래 여백을 12mm씩 부여 => 실제 표가 들어갈 공간은 높이 273mm
+    -->
+    <div id="document-container" class="bg-white shadow-xl mx-auto flex flex-col box-border" 
+         style="width: 210mm; height: 297mm; padding: 12mm;">
+        
+        <!-- 높이 273mm(297-24)를 각 칸별로 오차없이 배분하여 쏠림 및 잘림 차단 -->
+        <table class="w-full border-collapse text-center text-[13.5px] table-fixed" style="border: 1.5px solid #000; height: 273mm;">
             <thead>
                 <tr>
                     <th 
                         colspan="6" 
-                        class="h-[90px] border border-black text-[28px] tracking-widest text-white font-normal leading-[90px]"
-                        style="background-color: #2F855A;"
+                        class="border border-black text-[28px] tracking-widest text-white font-normal"
+                        style="background-color: #2F855A; height: 23mm; line-height: 23mm;"
                     >
                         아동복지학과 충전기 대여 관리 대장
                     </th>
                 </tr>
-                <tr class="bg-white text-base">
-                    <!-- align-middle 제거 및 높이와 줄간격을 동일하게(34px) 맞추어 글자 쏠림 원천 차단 -->
-                    <th class="border border-black h-[34px] w-[6%] font-normal text-center leading-[34px]">순번</th>
-                    <th class="border border-black h-[34px] w-[14%] font-normal text-center leading-[34px]">대여일</th>
-                    <th class="border border-black h-[34px] w-[18%] font-normal text-center leading-[34px]">학번</th>
-                    <th class="border border-black h-[34px] w-[14%] font-normal text-center leading-[34px]">이름</th>
-                    <th class="border border-black h-[34px] w-[6%] font-normal text-center leading-[34px]">개수</th>
-                    <th class="border border-black h-[34px] w-[42%] font-normal text-center leading-[34px]">반납 후 서명</th>
+                <tr class="bg-white">
+                    <th class="border border-black font-normal text-center" style="width: 6%; height: 10mm; line-height: 10mm;">순번</th>
+                    <th class="border border-black font-normal text-center" style="width: 14%; height: 10mm; line-height: 10mm;">대여일</th>
+                    <th class="border border-black font-normal text-center" style="width: 18%; height: 10mm; line-height: 10mm;">학번</th>
+                    <th class="border border-black font-normal text-center" style="width: 14%; height: 10mm; line-height: 10mm;">이름</th>
+                    <th class="border border-black font-normal text-center" style="width: 6%; height: 10mm; line-height: 10mm;">개수</th>
+                    <th class="border border-black font-normal text-center" style="width: 42%; height: 10mm; line-height: 10mm;">반납 후 서명</th>
                 </tr>
             </thead>
             <tbody id="table-body">
-                <!-- JavaScript를 통해 자동으로 30행이 생성됩니다 -->
+                <!-- JavaScript를 통해 자동으로 생성 -->
             </tbody>
         </table>
     </div>
 
     <script>
-        // 1. 아이콘 초기화
         lucide.createIcons();
 
-        // 2. 1번부터 30번까지 테이블 빈 행 동적 렌더링
         const tbody = document.getElementById('table-body');
+        // 남은 높이 240mm를 30행으로 나누면 정확히 한 행당 8mm
         for (let i = 1; i <= 30; i++) {
             const tr = document.createElement('tr');
-            // 칸 높이 28px, 줄 간격 28px로 강제 고정 (한 페이지 인쇄를 위해 크기 조정)
             tr.innerHTML = `
-                <td class="border border-black h-[28px] font-medium text-center leading-[28px]">${i}</td>
-                <td class="border border-black h-[28px] text-center leading-[28px]"></td>
-                <td class="border border-black h-[28px] text-center leading-[28px]"></td>
-                <td class="border border-black h-[28px] text-center leading-[28px]"></td>
-                <td class="border border-black h-[28px] text-center leading-[28px]"></td>
-                <td class="border border-black h-[28px] text-center leading-[28px]"></td>
+                <td class="border border-black font-medium text-center" style="height: 8mm; line-height: 8mm;">${i}</td>
+                <td class="border border-black text-center" style="height: 8mm; line-height: 8mm;"></td>
+                <td class="border border-black text-center" style="height: 8mm; line-height: 8mm;"></td>
+                <td class="border border-black text-center" style="height: 8mm; line-height: 8mm;"></td>
+                <td class="border border-black text-center" style="height: 8mm; line-height: 8mm;"></td>
+                <td class="border border-black text-center" style="height: 8mm; line-height: 8mm;"></td>
             `;
             tbody.appendChild(tr);
         }
 
-        // 3. 엑셀 다운로드 핸들러
         async function handleDownloadExcel() {
             if (typeof ExcelJS === 'undefined' || typeof saveAs === 'undefined') {
                 alert("엑셀 변환 기능을 불러오는 중입니다. 잠시 후 다시 시도해주세요.");
@@ -168,7 +186,6 @@
             saveAs(new Blob([buffer]), '아동복지학과_충전기대여관리대장.xlsx');
         }
 
-        // 4. 이미지 다운로드 핸들러
         async function handleDownloadImage() {
             if (typeof html2canvas === 'undefined') {
                 alert("이미지 변환 기능을 불러오는 중입니다. 잠시 후 다시 시도해주세요.");
@@ -193,7 +210,6 @@
             });
         }
 
-        // 5. PDF 다운로드 핸들러
         async function handleDownloadPDF() {
             if (typeof html2canvas === 'undefined' || typeof window.jspdf === 'undefined') {
                 alert("PDF 변환 기능을 불러오는 중입니다. 잠시 후 다시 시도해주세요.");
@@ -217,11 +233,9 @@
                 
                 const imgData = canvas.toDataURL('image/png');
                 
+                // A4 용지 규격(210mm x 297mm)에 맞게 꽉 채워 저장
                 const pdf = new jsPDF('p', 'mm', 'a4');
-                const pdfWidth = pdf.internal.pageSize.getWidth();
-                const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-                
-                pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+                pdf.addImage(imgData, 'PNG', 0, 0, 210, 297);
                 pdf.save('아동복지학과_충전기대여관리대장.pdf');
             } catch (err) {
                 container.classList.add('shadow-xl');
@@ -232,4 +246,5 @@
     </script>
 </body>
 </html>
+
 
