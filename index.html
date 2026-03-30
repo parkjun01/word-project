@@ -29,9 +29,9 @@
         .f-gamja { font-family: 'Gamja Flower', cursive !important; }
         .f-black { font-family: 'Black Han Sans', sans-serif !important; }
 
-        /* 입력 스타일 공통: 줄높이를 타이트하게 조정 */
+        /* 입력 스타일 공통: 줄높이를 숫자에 딱 맞게 조정 */
         .real-input, .fake-input { 
-            line-height: 1.2; 
+            line-height: 1.2 !important; 
             padding: 0 !important;
             margin: 0 !important;
             background: transparent;
@@ -40,13 +40,15 @@
             outline: none;
         }
         
-        /* 캡처용 텍스트 레이아웃 */
+        /* 캡처용 텍스트 레이아웃: 높이 팽창을 막기 위해 height: auto 강제 */
         .fake-input { 
             display: none; 
             word-break: break-all; 
             white-space: pre-wrap; 
             align-items: center;
             text-align: left;
+            height: auto !important;
+            min-height: unset !important;
         }
         
         /* 캡처 모드 변환 */
@@ -60,27 +62,27 @@
             display: block;
         }
 
-        /* [수정] 문제 박스 디자인: 고정 높이 제거 및 패딩 최소화 */
+        /* [수정 핵심] 문제 박스 디자인: 패딩을 줄이고 고정 높이 요소를 모두 제거 */
         .question-text-box {
             background-color: rgba(255, 255, 255, 0.95);
             border-radius: 12px;
-            padding: 8px 16px; /* 상하 여백을 12px에서 8px로 축소 */
+            padding: 10px 16px; /* 상하 패딩을 더 줄임 */
             border: 2px solid rgba(59, 130, 246, 0.4); 
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
             width: 100%;
             display: flex;
             align-items: center;
-            min-height: 0; /* 강제 높이 제거 */
-            height: auto;
+            height: auto !important; /* 높이가 내용물보다 커지지 않게 함 */
+            min-height: unset !important;
         }
 
-        /* 캡처 시 스타일 강제 고정 (디자인 유지) */
+        /* 캡처 시 스타일: 여백이 생기지 않도록 다시 한번 강제 고정 */
         .is-capturing .question-text-box {
             background-color: #ffffff !important;
             border: 2px solid #3b82f6 !important;
             box-shadow: none !important;
-            padding: 8px 16px !important;
-            min-height: 0 !important;
+            padding: 10px 16px !important;
+            min-height: unset !important;
             height: auto !important;
         }
 
@@ -109,7 +111,7 @@
         메시지
     </div>
 
-    <!-- 배경 갤러리 패널 -->
+    <!-- 배경 설정 패널 -->
     <div class="w-full max-w-lg mb-4 bg-white p-4 rounded-xl shadow-md border border-gray-200">
         <div class="flex justify-between items-center mb-1 text-sm">
             <span class="font-bold text-gray-800">🖼️ 내 배경 갤러리</span>
@@ -219,7 +221,7 @@
             function renderGallery() {
                 galleryEl.innerHTML = '';
                 if (localGallery.length === 0) {
-                    galleryEl.innerHTML = '<div class="text-[10px] text-gray-400 italic px-2">이미지를 추가해 보세요.</div>';
+                    galleryEl.innerHTML = '<div class="text-[10px] text-gray-400 italic px-2">이미지를 추가하세요.</div>';
                     return;
                 }
                 localGallery.forEach(data => {
@@ -332,11 +334,12 @@
                 if (captureBtn.disabled) return;
                 
                 captureBtn.disabled = true;
-                captureBtn.textContent = '저장 준비 중...';
+                captureBtn.textContent = '저장 중...';
                 document.body.classList.add('capturing');
                 captureArea.classList.add('is-capturing');
                 window.scrollTo(0, 0);
 
+                // 모든 입력값을 텍스트 레이어로 전이 (중요: 높이값 강제 주입 제거)
                 document.querySelectorAll('.capture-input-wrapper').forEach(w => {
                     const real = w.querySelector('.real-input'), fake = w.querySelector('.fake-input');
                     if (real && fake) {
@@ -346,6 +349,7 @@
                         fake.style.fontWeight = style.fontWeight;
                         fake.style.fontSize = style.fontSize;
                         fake.style.color = style.color;
+                        // 캡처 시 높이를 auto로 두어 부모 박스가 커지는 현상 방지
                         fake.style.height = 'auto'; 
                     }
                 });
@@ -366,12 +370,12 @@
                         const url = URL.createObjectURL(blob);
                         const link = document.createElement("a");
                         link.href = url;
-                        link.download = `Boast_Quiz_${new Date().getTime()}.png`;
+                        link.download = `QuizCard_${new Date().getTime()}.png`;
                         document.body.appendChild(link);
                         link.click();
                         document.body.removeChild(link);
                         setTimeout(() => URL.revokeObjectURL(url), 200);
-                        showToast("성공적으로 저장되었습니다.");
+                        showToast("이미지가 저장되었습니다.");
                     }, "image/png");
                 } catch (err) { 
                     showToast("저장 실패"); 
