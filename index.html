@@ -1,410 +1,262 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Boast in God</title>
+import React, { useState, useRef, useEffect } from 'react';
 
-    <!-- 구글 웹폰트 연동 -->
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Noto+Sans+KR:wght@400;700;900&family=Nanum+Myeongjo:wght@400;700;800&family=Jua&family=Gamja+Flower&family=Black+Han+Sans&display=swap" rel="stylesheet">
-    
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- html2canvas 라이브러리 -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+// 구글 웹폰트 연동
+const FontLink = () => (
+  <link
+    href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Noto+Sans+KR:wght@400;700;900&display=swap"
+    rel="stylesheet"
+  />
+);
 
-    <style>
-        .font-title { font-family: 'Playfair Display', serif; }
-        
-        /* 템플릿 기본 폰트 */
-        .tp-font { font-family: 'Noto Sans KR', sans-serif !important; }
+// [핵심 해결책] textarea와 input을 완벽하게 대체하는 특수 텍스트 블록
+// html2canvas의 캡처 버그(여백 틀어짐, 잔상 현상)를 원천 차단합니다.
+const ContentEditableBlock = ({ html, onChange, className, style }) => {
+  const contentEditableRef = useRef(null);
 
-        /* 사용자 폰트 설정 */
-        .f-noto { font-family: 'Noto Sans KR', sans-serif !important; }
-        .f-myeongjo { font-family: 'Nanum Myeongjo', serif !important; }
-        .f-jua { font-family: 'Jua', sans-serif !important; }
-        .f-gamja { font-family: 'Gamja Flower', cursive !important; }
-        .f-black { font-family: 'Black Han Sans', sans-serif !important; }
+  return (
+    <div
+      ref={contentEditableRef}
+      contentEditable
+      suppressContentEditableWarning
+      className={`editable-element outline-none cursor-text ${className}`}
+      style={{
+        whiteSpace: 'pre-wrap',
+        wordBreak: 'break-word',
+        ...style
+      }}
+      onInput={(e) => {
+        if (onChange) onChange(e.currentTarget.innerText);
+      }}
+      dangerouslySetInnerHTML={{ __html: html }}
+    />
+  );
+};
 
-        /* =========================================
-           [완벽 해결] contenteditable 디자인 
-           - html2canvas 버그 원천 차단. 보이는 그대로 저장됨.
-           ========================================= */
-        [contenteditable] {
-            outline: none;
-            word-break: break-all;
-            white-space: pre-wrap;
+const App = () => {
+  const [topic, setTopic] = useState('');
+  const [bgImage, setBgImage] = useState(null);
+  const [questions, setQuestions] = useState([
+    { id: 1, type: 'subjective', text: '' },
+    { id: 2, type: 'subjective', text: '' },
+    { id: 3, type: 'objective', text: '', options: ['', '', ''] }
+  ]);
+  
+  const [isCapturing, setIsCapturing] = useState(false);
+  const captureRef = useRef(null);
+
+  // 배경 이미지 로컬 스토리지 연동
+  useEffect(() => {
+    const savedBg = localStorage.getItem('boast_saved_bg_final');
+    if (savedBg) setBgImage(savedBg);
+  }, []);
+
+  // html2canvas 동적 로드
+  useEffect(() => {
+    if (typeof window !== 'undefined' && !window.html2canvas) {
+      const script = document.createElement('script');
+      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+      script.async = true;
+      document.body.appendChild(script);
+    }
+  }, []);
+
+  const handleBgUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const result = event.target.result;
+        setBgImage(result);
+        localStorage.setItem('boast_saved_bg_final', result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleQuestionChange = (id, text) => {
+    setQuestions(prev => prev.map(q => q.id === id ? { ...q, text } : q));
+  };
+
+  const handleOptionChange = (qId, optIndex, text) => {
+    setQuestions(prev => prev.map(q => {
+      if (q.id === qId) {
+        const newOptions = [...q.options];
+        newOptions[optIndex] = text;
+        return { ...q, options: newOptions };
+      }
+      return q;
+    }));
+  };
+
+  const getCircleNumber = (index) => String.fromCharCode(0x2460 + index);
+
+  // 이미지 저장 로직 (이제 복잡한 치환 과정 없이 화면 그대로 찍습니다)
+  const generateImage = async () => {
+    if (!window.html2canvas || !captureRef.current) return;
+    setIsCapturing(true);
+
+    const originalScroll = window.scrollY;
+    window.scrollTo(0, 0);
+
+    try {
+      // 렌더링 안정화 대기
+      await new Promise(r => setTimeout(r, 200));
+
+      const canvas = await window.html2canvas(captureRef.current, {
+        useCORS: true,
+        scale: 2, 
+        backgroundColor: '#ffffff',
+        logging: false,
+        onclone: (clonedDoc) => {
+          // 캡처 시 불필요한 폰트 변경 툴바만 숨깁니다.
+          clonedDoc.querySelectorAll('.capture-hide').forEach(el => {
+            el.style.display = 'none';
+          });
         }
-        /* Placeholder 기능 구현 */
-        [contenteditable]:empty::before {
-            content: attr(data-placeholder);
-            color: #9ca3af;
-            pointer-events: none;
-            display: block;
-        }
+      });
 
-        /* 문제 박스 (크기 축소 및 세로 중앙 완벽 고정) */
-        .question-box {
-            display: flex;
-            align-items: center; /* 어떤 상황에서도 무조건 수직 중앙 */
-            background-color: rgba(255, 255, 255, 0.98);
-            border-radius: 9999px; /* 둥근 캡슐형 */
-            border: 2px solid #3b82f6;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.08);
-            height: 60px; /* 박스 높이 고정 */
-            padding: 0 20px;
-            gap: 12px;
-            width: 100%;
-        }
+      canvas.toBlob((blob) => {
+        if (!blob) throw new Error("이미지 생성 실패");
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `Boast_In_God_${new Date().toISOString().slice(0,10)}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(() => URL.revokeObjectURL(url), 200);
+      }, "image/png", 1.0);
 
-        /* 문제 번호 (박스 내부) */
-        .q-num {
-            font-size: 22px;
-            font-weight: 900;
-            color: #2563eb;
-            line-height: 1;
-            flex-shrink: 0;
-            display: flex;
-            align-items: center;
-            height: 100%;
-        }
+    } catch (error) {
+      console.error("이미지 캡처 오류:", error);
+      alert("이미지 저장 중 오류가 발생했습니다.");
+    } finally {
+      window.scrollTo(0, originalScroll);
+      setIsCapturing(false);
+    }
+  };
 
-        /* 텍스트 입력 영역 */
-        .q-text {
-            font-size: 18px;
-            font-weight: 700;
-            color: #1f2937;
-            line-height: 1.3;
-            flex-grow: 1;
-            max-height: 48px; /* 2줄까지만 시각적 허용 */
-            overflow: hidden;
-            display: flex;
-            align-items: center; /* 텍스트 자체도 수직 중앙 */
-        }
-
-        /* 선택지 입력 영역 */
-        .opt-text {
-            font-size: 16px;
-            font-weight: 700;
-            color: #374151;
-            border-bottom: 2px solid #e5e7eb;
-            padding-bottom: 2px;
-            flex-grow: 1;
-            transition: border-color 0.2s;
-        }
-        .opt-text:focus { border-color: #60a5fa; }
-
-        /* 폰트 툴바 */
-        .font-toolbar { display: flex; gap: 4px; margin-bottom: 6px; justify-content: flex-end; }
-        .font-choice-btn {
-            background: #f1f5f9; color: #475569; padding: 2px 8px; border-radius: 4px;
-            font-size: 10px; font-weight: bold; border: 1px solid #e2e8f0; transition: all 0.2s;
-        }
-        .font-choice-btn.active { background: #3b82f6; color: white; border-color: #2563eb; }
-
-        .custom-scrollbar::-webkit-scrollbar { height: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-    </style>
-</head>
-<body class="bg-gray-100 min-h-screen flex flex-col items-center p-4 py-8 tp-font relative">
-
-    <div id="toast" class="fixed top-4 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white px-6 py-3 rounded-full shadow-2xl transition-opacity duration-300 opacity-0 pointer-events-none z-50 font-bold text-sm text-center min-w-[250px]">
-        알림 메시지
-    </div>
-
-    <!-- 배경 설정 패널 -->
-    <div class="w-full max-w-lg mb-4 bg-white p-4 rounded-xl shadow-md border border-gray-200">
-        <div class="flex justify-between items-center mb-1 text-sm">
-            <span class="font-bold text-gray-800">🖼️ 배경 이미지 선택</span>
-        </div>
-        <div id="image-gallery" class="flex gap-3 overflow-x-auto pb-2 pt-1 items-center min-h-[5rem] custom-scrollbar"></div>
-        <label class="cursor-pointer mt-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg text-sm font-bold transition-colors text-center block w-full shadow-sm">
-            + 새 배경 추가
-            <input type="file" id="bg-upload" class="hidden" accept="image/*">
+  return (
+    <div className="min-h-screen bg-gray-100 flex flex-col items-center p-4 py-8" style={{ fontFamily: "'Noto Sans KR', sans-serif" }}>
+      <FontLink />
+      
+      {/* 상단 컨트롤 패널 */}
+      <div className="w-full max-w-lg mb-6 bg-white p-4 rounded-xl shadow-md border border-gray-200 flex justify-between items-center">
+        <span className="font-bold text-gray-800 text-sm">🖼️ 배경 이미지</span>
+        <label className="cursor-pointer bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-bold transition-colors shadow-sm">
+          + 사진 업로드
+          <input type="file" className="hidden" accept="image/*" onChange={handleBgUpload} />
         </label>
-    </div>
-
-    <!-- 캡처 타겟 영역 -->
-    <div id="capture-area" class="relative w-full max-w-lg shadow-2xl rounded-xl overflow-hidden bg-white min-h-[850px] flex flex-col border border-gray-100">
-        
-        <!-- 배경 -->
-        <div id="main-bg-wrap" class="absolute inset-0 pointer-events-none z-0 opacity-40">
-            <img id="main-bg-img" src="Gemini_Generated_Image_sed1dused1dused1.png.jpg" alt="Background" class="w-full h-full object-cover object-center select-none" onerror="this.style.display='none'">
+      </div>
+      
+      {/* 캡처 타겟 영역 */}
+      <div 
+        id="capture-area"
+        ref={captureRef}
+        className="relative w-full max-w-lg shadow-2xl rounded-2xl overflow-hidden bg-white min-h-[850px] flex flex-col border border-gray-100"
+      >
+        <div className="absolute inset-0 pointer-events-none z-0 opacity-30">
+          {bgImage ? (
+             <img src={bgImage} alt="Background" className="w-full h-full object-cover object-center" />
+          ) : (
+            <div className="w-full h-full bg-slate-100 flex items-center justify-center text-gray-300 font-bold">
+              배경을 추가해주세요
+            </div>
+          )}
         </div>
 
-        <div class="relative z-10 p-8 flex flex-col flex-grow">
-            <!-- 타이틀 -->
-            <div class="text-left font-title mb-8">
-                <h2 class="text-2xl md:text-3xl font-bold text-gray-700 italic">Boast not tomorrow</h2>
-                <h1 class="text-4xl md:text-5xl font-black text-blue-600 mt-2 tracking-wide">Boast in God</h1>
+        <div className="relative z-10 p-8 flex flex-col flex-grow">
+          
+          <div className="text-left mb-8">
+            <h2 className="text-3xl font-bold text-gray-700 italic" style={{ fontFamily: "'Playfair Display', serif" }}>
+              Boast not tomorrow
+            </h2>
+            <h1 className="text-5xl font-black text-blue-600 mt-2 tracking-wide" style={{ fontFamily: "'Playfair Display', serif" }}>
+              Boast in God
+            </h1>
+          </div>
+
+          {/* 주제 입력 영역 */}
+          <div className="mb-10 flex items-center gap-3">
+            <label className="shrink-0 text-xl font-bold text-gray-800 flex items-center h-full">오늘의 주제 :</label>
+            <div className="flex-grow">
+              <ContentEditableBlock
+                html={topic}
+                onChange={setTopic}
+                className="w-full bg-transparent font-bold text-gray-800 border-b-2 border-gray-400 focus:border-blue-500 pb-1 transition-colors"
+                style={{ fontSize: '22px', lineHeight: '1.4' }}
+              />
             </div>
+          </div>
 
-            <!-- 주제 -->
-            <div class="mb-10">
-                <div class="font-toolbar" id="toolbar-topic">
-                    <button class="font-choice-btn active" data-font="f-noto">고딕</button>
-                    <button class="font-choice-btn" data-font="f-myeongjo">명조</button>
-                    <button class="font-choice-btn" data-font="f-jua">주아</button>
-                    <button class="font-choice-btn" data-font="f-gamja">감자</button>
-                    <button class="font-choice-btn" data-font="f-black">블랙</button>
+          <div className="flex-grow flex flex-col">
+            <h3 className="text-xl font-bold text-gray-800 mb-6">오늘의 퀴즈</h3>
+
+            <div className="space-y-8">
+              {questions.map((q, index) => (
+                <div key={q.id} className="relative group">
+                  
+                  {/* 완벽한 직사각형 박스 & 수직 중앙 정렬 */}
+                  <div className="w-full bg-white/95 rounded-xl border-2 border-blue-500 shadow-sm px-4 py-3 flex flex-row items-center min-h-[64px] gap-3">
+                    
+                    {/* 숫자 (중앙 정렬) */}
+                    <div className="w-[32px] shrink-0 flex justify-center items-center">
+                      <span className="text-2xl font-black text-blue-600 leading-none">
+                        {index + 1}.
+                      </span>
+                    </div>
+                    
+                    {/* 텍스트 입력칸 (수직 중앙 정렬) */}
+                    <div className="flex-grow flex items-center">
+                      <ContentEditableBlock
+                        html={q.text}
+                        onChange={(val) => handleQuestionChange(q.id, val)}
+                        className="w-full text-xl font-bold text-gray-800"
+                        style={{ lineHeight: '1.4' }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* 객관식 하단 선택지 */}
+                  {q.type === 'objective' && (
+                    <div className="pl-[52px] space-y-3 mt-4">
+                      {q.options.map((optText, optIndex) => (
+                        <div key={optIndex} className="flex items-center gap-3">
+                          <div className="min-w-[28px] flex justify-center items-center shrink-0">
+                            <span className="font-bold text-gray-600 text-2xl leading-none">
+                              {getCircleNumber(optIndex)}
+                            </span>
+                          </div>
+                          <div className="flex-grow flex items-center">
+                            <ContentEditableBlock
+                              html={optText}
+                              onChange={(val) => handleOptionChange(q.id, optIndex, val)}
+                              className="w-full border-b-2 border-gray-300 text-lg text-gray-800 pb-1"
+                              style={{ lineHeight: '1.2' }}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
-                <div class="flex items-center gap-3">
-                    <label class="shrink-0 text-xl font-bold text-gray-800 tp-font">오늘의 주제 :</label>
-                    <div id="topic-input" contenteditable="true" data-placeholder="주제를 입력하세요" class="f-noto flex-grow font-bold text-gray-800 border-b-2 border-gray-400 focus:border-blue-500 pb-1" style="font-size: 22px; line-height: 1.4;"></div>
-                </div>
+              ))}
             </div>
-
-            <!-- 퀴즈 리스트 -->
-            <div class="flex-grow flex flex-col">
-                <h3 class="text-xl font-bold text-gray-800 mb-6 tp-font">오늘의 퀴즈</h3>
-                
-                <!-- 1번 주관식 -->
-                <div class="mb-8 relative group" id="q-wrap-1">
-                    <div class="font-toolbar">
-                        <button class="font-choice-btn active" data-font="f-noto">고딕</button><button class="font-choice-btn" data-font="f-myeongjo">명조</button><button class="font-choice-btn" data-font="f-jua">주아</button><button class="font-choice-btn" data-font="f-gamja">감자</button><button class="font-choice-btn" data-font="f-black">블랙</button>
-                    </div>
-                    <div class="question-box f-noto">
-                        <div class="q-num tp-font">1.</div>
-                        <div contenteditable="true" data-placeholder="문제를 입력하세요" class="q-text"></div>
-                    </div>
-                </div>
-
-                <!-- 2번 주관식 -->
-                <div class="mb-8 relative group" id="q-wrap-2">
-                    <div class="font-toolbar">
-                        <button class="font-choice-btn active" data-font="f-noto">고딕</button><button class="font-choice-btn" data-font="f-myeongjo">명조</button><button class="font-choice-btn" data-font="f-jua">주아</button><button class="font-choice-btn" data-font="f-gamja">감자</button><button class="font-choice-btn" data-font="f-black">블랙</button>
-                    </div>
-                    <div class="question-box f-noto">
-                        <div class="q-num tp-font">2.</div>
-                        <div contenteditable="true" data-placeholder="문제를 입력하세요" class="q-text"></div>
-                    </div>
-                </div>
-
-                <!-- 3번 객관식 -->
-                <div class="mb-8 relative group" id="q-wrap-3">
-                    <div class="font-toolbar">
-                        <button class="font-choice-btn active" data-font="f-noto">고딕</button><button class="font-choice-btn" data-font="f-myeongjo">명조</button><button class="font-choice-btn" data-font="f-jua">주아</button><button class="font-choice-btn" data-font="f-gamja">감자</button><button class="font-choice-btn" data-font="f-black">블랙</button>
-                    </div>
-                    <div class="question-box f-noto mb-4">
-                        <div class="q-num tp-font">3.</div>
-                        <div contenteditable="true" data-placeholder="문제를 입력하세요" class="q-text"></div>
-                    </div>
-                    <div class="pl-[60px] space-y-4 f-noto" id="q-options-3">
-                        <div class="flex items-center gap-3">
-                            <span class="font-bold text-gray-600 tp-font text-xl">①</span>
-                            <div contenteditable="true" data-placeholder="선택지 입력" class="opt-text"></div>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <span class="font-bold text-gray-600 tp-font text-xl">②</span>
-                            <div contenteditable="true" data-placeholder="선택지 입력" class="opt-text"></div>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <span class="font-bold text-gray-600 tp-font text-xl">③</span>
-                            <div contenteditable="true" data-placeholder="선택지 입력" class="opt-text"></div>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
+          </div>
         </div>
+      </div>
+
+      <button
+        onClick={generateImage}
+        disabled={isCapturing}
+        className={`mt-10 mb-12 px-12 py-4 bg-blue-600 hover:bg-blue-700 text-white text-lg font-bold rounded-full shadow-lg transition-all transform hover:scale-105 ${
+          isCapturing ? 'opacity-70 cursor-not-allowed' : ''
+        }`}
+      >
+        {isCapturing ? '이미지 최적화 처리 중...' : '이미지로 저장하기'}
+      </button>
     </div>
+  );
+};
 
-    <!-- 저장 버튼 -->
-    <button id="capture-btn" class="mt-8 mb-12 px-10 py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-full shadow-lg transition-all transform hover:scale-105">
-        이미지로 저장하기
-    </button>
-
-    <script>
-        const fontClasses = ['f-noto', 'f-myeongjo', 'f-jua', 'f-gamja', 'f-black'];
-
-        document.addEventListener("DOMContentLoaded", () => {
-            const bgImg = document.getElementById('main-bg-img');
-            const bgUpload = document.getElementById('bg-upload');
-            const galleryEl = document.getElementById('image-gallery');
-            const toast = document.getElementById('toast');
-            const captureArea = document.getElementById('capture-area');
-            const captureBtn = document.getElementById('capture-btn');
-
-            // 갤러리 로직
-            let localGallery = JSON.parse(localStorage.getItem('boast_gallery_v5') || '[]');
-            const savedBg = localStorage.getItem('boast_saved_bg_v5');
-            if (savedBg) { bgImg.src = savedBg; bgImg.style.display = 'block'; }
-
-            function showToast(msg) {
-                toast.textContent = msg;
-                toast.style.opacity = '1';
-                setTimeout(() => toast.style.opacity = '0', 2500);
-            }
-
-            const autoAdjustImage = (base64Str) => {
-                return new Promise((resolve) => {
-                    const img = new Image();
-                    img.src = base64Str;
-                    img.onload = () => {
-                        const canvas = document.createElement('canvas');
-                        let w = img.width, h = img.height, maxSize = 1200;
-                        if (w > maxSize || h > maxSize) {
-                            if (w > h) { h = Math.round((h * maxSize) / w); w = maxSize; }
-                            else { w = Math.round((w * maxSize) / h); h = maxSize; }
-                        }
-                        canvas.width = w; canvas.height = h;
-                        const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0, w, h);
-                        resolve(canvas.toDataURL('image/jpeg', 0.85)); 
-                    };
-                });
-            };
-
-            function renderGallery() {
-                galleryEl.innerHTML = '';
-                if (localGallery.length === 0) {
-                    galleryEl.innerHTML = '<div class="text-[10px] text-gray-400 italic px-2">배경을 추가해주세요.</div>';
-                    return;
-                }
-                localGallery.forEach(data => {
-                    const thumb = document.createElement('div');
-                    thumb.className = "relative flex-shrink-0 w-14 h-14 rounded-lg overflow-hidden border-2 border-transparent hover:border-blue-500 cursor-pointer shadow-sm";
-                    const img = document.createElement('img');
-                    img.src = data.bgBase64; img.className = "w-full h-full object-cover";
-                    img.onclick = () => { 
-                        bgImg.src = data.bgBase64; bgImg.style.display = 'block'; 
-                        localStorage.setItem('boast_saved_bg_v5', data.bgBase64); 
-                        showToast("배경 변경 완료");
-                    };
-                    thumb.append(img); galleryEl.appendChild(thumb);
-                });
-            }
-            renderGallery();
-
-            bgUpload.addEventListener('change', async (e) => {
-                const file = e.target.files[0]; if (!file) return;
-                const reader = new FileReader();
-                reader.onload = async (event) => {
-                    const final = await autoAdjustImage(event.target.result);
-                    bgImg.src = final; bgImg.style.display = 'block';
-                    localStorage.setItem('boast_saved_bg_v5', final);
-                    localGallery.unshift({ id: Date.now().toString(), bgBase64: final });
-                    if (localGallery.length > 8) localGallery.pop(); 
-                    localStorage.setItem('boast_gallery_v5', JSON.stringify(localGallery));
-                    renderGallery();
-                    showToast("배경 추가 성공!");
-                };
-                reader.readAsDataURL(file);
-            });
-
-            // 폰트 변경 처리
-            document.addEventListener('click', (e) => {
-                const btn = e.target.closest('.font-choice-btn');
-                if (btn) {
-                    let targetArea;
-                    if (btn.closest('#topic-container') || btn.closest('.mb-10')) {
-                        targetArea = document.getElementById('topic-input');
-                    } else {
-                        const wrap = btn.closest('.group');
-                        targetArea = wrap.querySelector('.question-box');
-                        const options = wrap.querySelector('#q-options-3');
-                        if (options) {
-                            options.classList.remove(...fontClasses);
-                            options.classList.add(btn.dataset.font);
-                        }
-                    }
-                    targetArea.classList.remove(...fontClasses);
-                    targetArea.classList.add(btn.dataset.font);
-                    btn.parentElement.querySelectorAll('.font-choice-btn').forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-                }
-            });
-
-            // 엔터 막기 (한줄, 최대 두줄 제한 제어)
-            document.addEventListener('keydown', (e) => {
-                if (e.target.hasAttribute('contenteditable') && e.key === 'Enter') {
-                    e.preventDefault(); // 엔터 자체를 막아서 깔끔하게 유지
-                }
-            });
-
-            // 글씨 길어지면 자동 축소
-            document.addEventListener('input', (e) => {
-                if (e.target.classList.contains('q-text')) {
-                    const el = e.target;
-                    el.style.fontSize = '18px'; // 기본 크기로 리셋
-                    let size = 18;
-                    // 내용물이 박스 높이(약 48px)를 초과하면 폰트 크기 축소
-                    while (el.scrollHeight > 48 && size > 11) {
-                        size -= 0.5;
-                        el.style.fontSize = size + 'px';
-                    }
-                } else if (e.target.id === 'topic-input') {
-                    const el = e.target;
-                    el.style.fontSize = '22px';
-                    let size = 22;
-                    while (el.scrollWidth > el.parentElement.clientWidth && size > 12) {
-                        size -= 0.5;
-                        el.style.fontSize = size + 'px';
-                    }
-                }
-            });
-
-            // 이미지 캡처 (오류 원천 차단 완벽본)
-            captureBtn.onclick = async () => {
-                if (captureBtn.disabled) return;
-                
-                // 캡처 전 포커스 해제 (커서 깜빡임 방지)
-                if (document.activeElement && document.activeElement.blur) {
-                    document.activeElement.blur();
-                }
-
-                captureBtn.disabled = true;
-                const prevText = captureBtn.textContent;
-                captureBtn.textContent = '이미지 생성 중...';
-                showToast("이미지를 저장하고 있습니다.");
-
-                const originalScroll = window.scrollY;
-                window.scrollTo(0, 0);
-
-                // 툴바 숨기기 처리
-                const toolbars = document.querySelectorAll('.font-toolbar');
-                toolbars.forEach(tb => tb.style.display = 'none');
-
-                try {
-                    await new Promise(r => setTimeout(r, 300));
-                    
-                    // form 요소가 하나도 없기 때문에 화면에 보이는 구조와 CSS 그대로 캡처됨
-                    const canvas = await html2canvas(captureArea, { 
-                        useCORS: true, 
-                        scale: 2, 
-                        backgroundColor: '#ffffff',
-                        logging: false
-                    });
-                    
-                    canvas.toBlob((blob) => {
-                        if (!blob) { showToast("이미지 생성 오류"); return; }
-                        const url = URL.createObjectURL(blob);
-                        const a = document.createElement("a");
-                        a.href = url;
-                        a.download = `God_Quiz_${Date.now()}.png`;
-                        document.body.appendChild(a);
-                        a.click();
-                        document.body.removeChild(a);
-                        
-                        setTimeout(() => URL.revokeObjectURL(url), 200);
-                        showToast("성공적으로 저장되었습니다!");
-                    }, "image/png", 1.0);
-
-                } catch (err) { 
-                    console.error(err);
-                    showToast("저장 실패. 오류가 발생했습니다."); 
-                } finally {
-                    toolbars.forEach(tb => tb.style.display = 'flex'); // 툴바 원상복구
-                    window.scrollTo(0, originalScroll);
-                    captureBtn.disabled = false;
-                    captureBtn.textContent = prevText;
-                }
-            };
-        });
-    </script>
-</body>
-</html>
-
-
+export default App;
