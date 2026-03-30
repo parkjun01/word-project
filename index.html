@@ -10,15 +10,12 @@
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- html2canvas 라이브러리 -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
     <style>
         .font-title { font-family: 'Playfair Display', serif; }
         .tp-font { font-family: 'Noto Sans KR', sans-serif !important; }
 
-        /* [핵심] contenteditable 텍스트 블록 기본 속성 */
+        /* contenteditable 텍스트 블록 기본 속성 */
         .editable-element {
             outline: none !important;
             word-break: break-word;
@@ -30,16 +27,41 @@
         .custom-scrollbar::-webkit-scrollbar { height: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+
+        /* [핵심] 인쇄(프린트/PDF) 최적화 스타일 */
+        @media print {
+            body { 
+                background: white !important; 
+                margin: 0; 
+                padding: 0; 
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            .print-hide { display: none !important; }
+            #capture-area {
+                box-shadow: none !important;
+                border: none !important;
+                margin: 0 auto !important;
+                page-break-inside: avoid;
+                transform: scale(0.95); /* 인쇄 시 잘림 방지 */
+                transform-origin: top center;
+            }
+            /* 프린트 시 배경색/이미지가 강제로 인쇄되도록 설정 */
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+        }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col items-center p-4 py-8 tp-font relative">
 
-    <div id="toast" class="fixed top-4 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white px-6 py-3 rounded-full shadow-2xl transition-opacity duration-300 opacity-0 pointer-events-none z-50 font-bold text-sm text-center min-w-[250px]">
+    <div id="toast" class="print-hide fixed top-4 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white px-6 py-3 rounded-full shadow-2xl transition-opacity duration-300 opacity-0 pointer-events-none z-50 font-bold text-sm text-center min-w-[250px]">
         알림 메시지
     </div>
 
-    <!-- 상단 컨트롤 패널 -->
-    <div class="w-full max-w-lg mb-6 bg-white p-4 rounded-xl shadow-md border border-gray-200 flex justify-between items-center">
+    <!-- 상단 컨트롤 패널 (인쇄 시 숨김) -->
+    <div class="print-hide w-full max-w-lg mb-6 bg-white p-4 rounded-xl shadow-md border border-gray-200 flex justify-between items-center">
         <span class="font-bold text-gray-800 text-sm">🖼️ 배경 이미지</span>
         <label class="cursor-pointer bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-bold transition-colors shadow-sm">
             + 사진 업로드
@@ -47,8 +69,8 @@
         </label>
     </div>
 
-    <!-- 캡처 타겟 영역 -->
-    <div id="capture-area" class="relative w-full max-w-lg shadow-2xl rounded-2xl overflow-hidden bg-white min-h-[850px] flex flex-col border border-gray-100">
+    <!-- 메인 양식 영역 (이 부분만 인쇄됨) -->
+    <div id="capture-area" class="relative w-full max-w-lg shadow-2xl rounded-2xl overflow-hidden bg-white min-h-[850px] flex flex-col border border-gray-100 mb-10">
         
         <!-- 배경 이미지 레이어 -->
         <div class="absolute inset-0 pointer-events-none z-0 opacity-30">
@@ -157,9 +179,9 @@
         </div>
     </div>
 
-    <!-- 캡처 버튼 -->
-    <button id="capture-btn" class="mt-10 mb-12 px-12 py-4 bg-blue-600 hover:bg-blue-700 text-white text-lg font-bold rounded-full shadow-lg transition-all transform hover:scale-105">
-        이미지로 저장하기
+    <!-- 인쇄(PDF 저장) 버튼 -->
+    <button id="print-btn" class="print-hide mt-4 mb-12 px-12 py-4 bg-green-600 hover:bg-green-700 text-white text-lg font-bold rounded-full shadow-lg transition-all transform hover:scale-105">
+        문서 인쇄하기 / PDF 저장
     </button>
 
     <script>
@@ -167,9 +189,8 @@
             const bgImg = document.getElementById('main-bg-img');
             const bgPlaceholder = document.getElementById('bg-placeholder');
             const bgUpload = document.getElementById('bg-upload');
-            const captureArea = document.getElementById('capture-area');
-            const captureBtn = document.getElementById('capture-btn');
             const toast = document.getElementById('toast');
+            const printBtn = document.getElementById('print-btn');
 
             // 토스트 알림 함수
             function showToast(msg) {
@@ -222,67 +243,28 @@
                 reader.readAsDataURL(file);
             });
 
-            // 캡처(이미지 저장) 로직 - 화면에 보이는 100% 그대로 저장
-            captureBtn.addEventListener('click', async () => {
-                if (captureBtn.disabled) return;
-                
-                // 포커스 해제 (커서 깜빡임 방지)
-                if (document.activeElement && document.activeElement.blur) {
-                    document.activeElement.blur();
-                }
-
-                captureBtn.disabled = true;
-                const prevText = captureBtn.textContent;
-                captureBtn.textContent = '이미지 생성 중...';
-                showToast("이미지를 저장하고 있습니다.");
-
-                const originalScroll = window.scrollY;
-                window.scrollTo(0, 0);
-
-                try {
-                    // 렌더링 안정화를 위한 짧은 대기
-                    await new Promise(r => setTimeout(r, 200));
-
-                    // html2canvas 실행 (입력창이 없으므로 버그 발생 X)
-                    const canvas = await html2canvas(captureArea, { 
-                        useCORS: true, 
-                        scale: 2, 
-                        backgroundColor: '#ffffff',
-                        logging: false
-                    });
-                    
-                    canvas.toBlob((blob) => {
-                        if (!blob) throw new Error("이미지 생성 오류");
-                        const url = URL.createObjectURL(blob);
-                        const a = document.createElement("a");
-                        a.href = url;
-                        a.download = `Boast_In_God_${new Date().toISOString().slice(0,10)}.png`;
-                        document.body.appendChild(a);
-                        a.click();
-                        document.body.removeChild(a);
-                        
-                        setTimeout(() => URL.revokeObjectURL(url), 200);
-                        showToast("성공적으로 저장되었습니다!");
-                    }, "image/png", 1.0);
-
-                } catch (err) { 
-                    console.error("Capture Error:", err);
-                    showToast("이미지 저장에 실패했습니다."); 
-                } finally {
-                    window.scrollTo(0, originalScroll);
-                    captureBtn.disabled = false;
-                    captureBtn.textContent = prevText;
-                }
-            });
-
-            // 엔터키 제어 (contenteditable 기본 줄바꿈 동작 개선)
+            // 엔터키 제어
             document.querySelectorAll('.editable-element').forEach(el => {
                 el.addEventListener('keydown', (e) => {
-                    // 선택지 입력칸(border-b-2 클래스 포함)에서는 엔터 막기
                     if (e.key === 'Enter' && el.classList.contains('border-b-2')) {
                         e.preventDefault();
                     }
                 });
+            });
+
+            // 인쇄하기 동작
+            printBtn.addEventListener('click', () => {
+                // 커서 깜빡임(포커스) 해제
+                if (document.activeElement && document.activeElement.blur) {
+                    document.activeElement.blur();
+                }
+
+                // 현재 사용 중인 창이 Iframe 내부일 경우 보안에 막힐 수 있어 안전장치 추가
+                try {
+                    window.print();
+                } catch (err) {
+                    showToast("현재 창에서는 인쇄가 차단되었습니다. 새 창으로 열어서 실행해주세요.");
+                }
             });
         });
     </script>
