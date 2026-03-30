@@ -18,6 +18,16 @@
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
+    <!-- 인쇄 시 배경색이 무조건 나오도록 강제하는 스타일 추가 -->
+    <style>
+        @media print {
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+        }
+    </style>
 </head>
 <body class="min-h-screen bg-gray-100 py-8 px-4 flex flex-col items-center" style="font-family: 'Jua', sans-serif;">
     
@@ -217,3 +227,6 @@
     </script>
 </body>
 </html>
+
+
+
